@@ -9,6 +9,8 @@ Shared, repository-independent workflow guardrails and planning playbooks.
 
 ## Contents
 - `AGENTS.core.md`: shared baseline guardrails.
+- `AGENTS.local.template.md`: minimal local overlay template for consumer repos.
+- `playbooks/git/`: shared worktree and rebase operational playbooks.
 - `playbooks/planning/`: plan templates.
 - `playbooks/meta/local-adaptation-policy.md`: allowed local customization model.
 - `docs/workflow-core-usage.md`: integration and rollout guidance.
@@ -18,6 +20,7 @@ Shared, repository-independent workflow guardrails and planning playbooks.
    - Git submodule (recommended), or
    - Git subtree.
 2. Create a repo-local addendum (`AGENTS.local.md`) for local specifics.
+   - Primarily set `WORKTREE_MAIN_ROOT`.
 3. Compose the consumer's effective `AGENTS.md` using:
    - shared `AGENTS.core.md`
    - local `AGENTS.local.md`

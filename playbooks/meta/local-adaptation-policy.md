@@ -13,9 +13,10 @@ code_paths: []
 Allow repository-local customization while preserving shared core guardrails.
 
 ## Allowed Local Adaptations
-- Repository-specific paths, commands, and project structure.
+- Configuration inputs required by shared policy (for example `WORKTREE_MAIN_ROOT`).
+- Repository-specific paths and project structure metadata.
 - Additional safety checks or stricter constraints.
-- Toolchain/runtime specifics for that repository.
+- Toolchain/runtime specifics only when not already prescribed by shared core.
 - Additional testing/documentation requirements.
 
 ## Forbidden Local Adaptations
@@ -23,12 +24,14 @@ Allow repository-local customization while preserving shared core guardrails.
 - Permitting destructive history/data operations by default.
 - Removing required verification before push when core policy requires it.
 - Replacing core precedence model with a permissive override model.
+- Redefining shared worktree workflow rules or command contract locally.
 
 ## Recommended File Layout
 - `AGENTS.local.md` should contain:
   - Repository context and toolchain defaults.
-  - Local workflow commands and paths.
-  - Additive or stricter rules only.
+  - Required local config values (especially `WORKTREE_MAIN_ROOT`).
+  - Local paths derived from shared config where needed.
+  - Additive or stricter rules only; avoid restating shared policy.
   - Explicit cross-reference to this policy.
 
 ## Conflict Handling

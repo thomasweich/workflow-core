@@ -22,6 +22,20 @@ This file defines repository-independent baseline rules for agent-driven enginee
 - Use a task branch/worktree by default.
 - Keep execution mode sequential by default (one branch/worktree per task) unless the user explicitly approves parallel implementation.
 - Create additional branches/worktrees only after explicit user approval.
+- Worktree policy and command contract are shared across consumer repositories:
+  - `scripts/worktree create <task-slug>`
+  - `scripts/worktree rebase --branch <branch>`
+  - `scripts/worktree push --branch <branch> --verify-cmd "<repo-verify-cmd>"`
+  - `scripts/worktree cleanup <branch>`
+  - `scripts/worktree list`
+- Required local configuration input for worktrees:
+  - `WORKTREE_MAIN_ROOT`: absolute path to the repository's main worktree root
+- Path derivation rule:
+  - task worktrees live as siblings under `dirname(WORKTREE_MAIN_ROOT)`
+  - task path pattern: `<dirname(WORKTREE_MAIN_ROOT)>/<branch-name>`
+- Shared worktree details live in:
+  - `playbooks/git/worktree-workflow.md`
+  - `playbooks/git/worktree-operations.md`
 
 ## 3) Collaboration Safety
 - Treat unknown local edits as owned by another human/agent.
@@ -57,7 +71,8 @@ This file defines repository-independent baseline rules for agent-driven enginee
 - Use shared templates in `playbooks/planning/`.
 
 ## 8) Local Adaptation Contract
-- Local overlays may add repository-specific rules and stricter constraints.
+- Local overlays should be minimal and primarily provide local configuration values (for example `WORKTREE_MAIN_ROOT`).
+- Local overlays may add repository-specific rules and stricter constraints only when needed.
 - Local overlays may not weaken core non-negotiables.
 - Local adaptation details and examples are defined in:
   - `playbooks/meta/local-adaptation-policy.md`

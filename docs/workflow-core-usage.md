@@ -12,25 +12,39 @@ code_paths: []
 ## Adoption Model
 Consumer repositories should import `workflow-core` as a pinned dependency and combine shared core with local repository adaptations.
 
+## Shared vs Local Boundary
+- Shared in `workflow-core`:
+  - non-negotiables
+  - worktree workflow and command contract
+  - planning/testing/documentation process guardrails
+- Local in consumer repo:
+  - configuration values only (primarily `WORKTREE_MAIN_ROOT`)
+  - additive stricter rules if needed
+
 ## Recommended Integration Steps
 1. Add shared core as a pinned dependency:
    - Submodule (recommended): `shared/workflow-core/`
    - Subtree (alternative if submodules are not allowed)
 2. Add local overlay file:
    - `AGENTS.local.md` in consumer repository root
-3. Create effective policy entrypoint:
+   - Keep this file minimal and configuration-focused.
+3. Set required local config values:
+   - `WORKTREE_MAIN_ROOT=<absolute-path-to-main-worktree-root>`
+   - Derive task-worktree parent as `dirname(WORKTREE_MAIN_ROOT)`.
+4. Create effective policy entrypoint:
    - `AGENTS.md` in consumer root, assembled from shared core + local overlay.
-4. Add validation checks in CI:
+5. Add validation checks in CI:
    - core version pin is explicit
    - effective policy file is up to date
    - local overlay does not weaken core non-negotiables
 
 ## Local Overlay Guidance
 - Keep local overlay scoped to repository specifics:
-  - tooling commands
-  - paths/layout
-  - stricter safety/verification constraints
+  - configuration values (especially `WORKTREE_MAIN_ROOT`)
+  - local paths/layout derived from that root
+  - stricter safety/verification constraints (if additive)
 - Do not restate or weaken shared non-negotiables.
+- Do not redefine shared worktree workflow rules locally.
 - See `playbooks/meta/local-adaptation-policy.md`.
 
 ## Upgrade Flow
