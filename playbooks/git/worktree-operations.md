@@ -21,8 +21,8 @@ code_paths:
 - Behavior:
   - If branch worktree already exists, it is reused.
   - If branch exists locally, it is attached to sibling-of-main-root worktree path automatically.
-  - By default, opens a new iTerm2 window and runs:
-    - `hapi codex --yolo`
+  - By default, opens a terminal and runs:
+    - `codex --dangerously-bypass-approvals-and-sandbox`
 - Slug guidance: lowercase kebab-case, 2-5 words, action-oriented.
 - Normalization: script lowercases input and converts invalid characters/spaces to `-`.
 - Useful flags:
@@ -32,10 +32,11 @@ code_paths:
   - `--reuse` allow pre-existing target path usage
   - `--no-fetch` skip fetch
   - `--allow-dirty` bypass clean-check
-  - `--no-codex` skip iTerm2/Codex auto-launch
+  - `--no-codex` skip terminal/Codex auto-launch
   - `--codex-cmd <cmd>` override Codex launch command
 - If `--no-codex` is used, immediately print the exact manual command:
   - `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox`
+- If terminal/Codex auto-launch fails, immediately print the same manual command.
 
 ## rebase
 - Command: `scripts/worktree rebase --branch <branch-name>`

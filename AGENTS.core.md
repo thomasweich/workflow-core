@@ -13,6 +13,7 @@ This file defines repository-independent baseline rules for agent-driven enginee
 ## 1) Core Non-negotiables
 - Never rewrite shared history (force-push, destructive resets, rebasing protected/default branches) unless the user explicitly requests it in-thread.
 - Rebase/merge/push/cleanup are user-gated actions; do them only when explicitly requested in-thread.
+- Do not ask the user to push; wait for explicit push initiation from the user.
 - Keep diffs minimal and atomic; no unrelated cleanup edits.
 - Stop and ask before any action that can lose data/history.
 - Do not commit secrets/credentials or production `.env` files.

@@ -18,7 +18,7 @@ code_paths:
 - Base ref: `origin/main`
 - Branch pattern: `agent/<task-slug>`
 - Worktree path pattern: sibling of main worktree root (`<main-worktree-parent>/<branch-name>`)
-- Launch behavior for `create`: open iTerm2 and run `hapi codex --yolo`
+- Launch behavior for `create`: open a terminal and run `codex --dangerously-bypass-approvals-and-sandbox` (terminal app may vary by platform/repo).
 
 ## Required Local Config Input
 - `WORKTREE_MAIN_ROOT`: absolute path to the consumer repository's main worktree root.
@@ -36,7 +36,7 @@ code_paths:
 ## Primary Commands
 1. Create task worktree:
    - `scripts/worktree create <task-slug>`
-   - Add `--no-codex` to skip iTerm2/Codex auto-launch.
+   - Add `--no-codex` to skip terminal/Codex auto-launch.
    - If `--no-codex` is used, immediately print the exact manual command:
      - `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox`
 2. Rebase task branch onto latest base:
@@ -69,6 +69,7 @@ code_paths:
 13. Before push, run the repository verify command and record what ran.
 14. If `--no-codex` is used during `create`, immediately print the manual `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox` command.
 15. `push` must explicitly target `<remote>/<branch>` and correct upstream tracking when local tracking is mismatched.
+16. If terminal/Codex auto-launch fails during `create`, immediately print the same manual command and path.
 
 ## Create Behavior
 - `create` should be idempotent for branch-to-worktree mapping:
