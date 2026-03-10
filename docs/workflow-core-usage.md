@@ -17,6 +17,7 @@ Consumer repositories should import `workflow-core` as a pinned dependency and c
   - non-negotiables
   - worktree workflow and command contract
   - planning/testing/documentation process guardrails
+  - AGENTS-evolution workflow for promoting policy changes
 - Local in consumer repo:
   - configuration values only (primarily `WORKTREE_MAIN_ROOT`)
   - additive stricter rules if needed
@@ -33,10 +34,17 @@ Consumer repositories should import `workflow-core` as a pinned dependency and c
    - Derive task-worktree parent as `dirname(WORKTREE_MAIN_ROOT)`.
 4. Create effective policy entrypoint:
    - `AGENTS.md` in consumer root, assembled from shared core + local overlay.
+   - Add wrapper commands:
+     - `scripts/workflow/render-agents`
+     - `scripts/workflow/validate-guardrails`
+   - Commit the rendered `AGENTS.md`.
 5. Add validation checks in CI:
    - core version pin is explicit
    - effective policy file is up to date
    - local overlay does not weaken core non-negotiables
+   - Run:
+     - `scripts/workflow/render-agents --check`
+     - `scripts/workflow/validate-guardrails`
 
 ## Local Overlay Guidance
 - Keep local overlay scoped to repository specifics:
@@ -47,12 +55,27 @@ Consumer repositories should import `workflow-core` as a pinned dependency and c
 - Do not redefine shared worktree workflow rules locally.
 - See `playbooks/meta/local-adaptation-policy.md`.
 
+## Shared Playbooks Worth Wrapping Locally
+Consumer repos should usually keep thin local wrappers for shared process docs so repository-specific supplements stay easy to find.
+
+Recommended shared playbooks to wrap locally:
+- `playbooks/planning/README.md`
+- `playbooks/planning/*.md`
+- `playbooks/testing/behavior-test-design.md`
+- `playbooks/meta/agents-evolution.md`
+
+Keep local supplements only for repository-specific:
+- command catalogs
+- rollout or migration runbooks
+- AGENTS candidate history or local governance logs
+
 ## Upgrade Flow
 1. Bump pinned `workflow-core` version.
 2. Regenerate or refresh effective consumer policy files.
 3. Review policy diff in PR.
 4. Run repository verification.
 5. Merge and propagate to additional repositories.
+6. Follow `playbooks/meta/shared-workflow-upgrade.md` for release notes and rollout order.
 
 ## Change Management
 - Treat shared-core updates as policy changes with explicit review.

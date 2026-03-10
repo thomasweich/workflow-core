@@ -33,6 +33,13 @@ Allow repository-local customization while preserving shared core guardrails.
   - Local paths derived from shared config where needed.
   - Additive or stricter rules only; avoid restating shared policy.
   - Explicit cross-reference to this policy.
+- Recommended section headings:
+  - `## Local Config`
+  - `## Local Paths` (optional)
+  - `## Local Tooling` (optional)
+  - `## Optional Additive Constraints` (optional)
+  - `## References` (optional)
+  - `## Waivers` (optional)
 
 ## Conflict Handling
 - If local and core rules conflict, core wins unless an explicit user instruction in-thread says otherwise.
@@ -44,3 +51,14 @@ Allow repository-local customization while preserving shared core guardrails.
   - scope and duration
   - risk and mitigation
   - explicit approving authority
+- Suggested `AGENTS.local.md` shape:
+  - `## Waivers`
+  - `### <waiver-id>`
+  - `- \`rule\`: ...`
+  - `- \`scope\`: ...`
+  - `- \`duration\`: ...`
+  - `- \`risk\`: ...`
+  - `- \`mitigation\`: ...`
+  - `- \`approved_by\`: ...`
+- Validation expectation:
+  - local overlays may declare waivers, but they still must not redefine shared worktree commands or silently weaken shared policy outside the documented waiver section.

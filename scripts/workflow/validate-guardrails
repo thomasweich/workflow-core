@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import re
+import sys
+from pathlib import Path
+
+
+PERMISSIVE_VERBS = re.compile(
+    r"\b(?:allow|allows|allowed|permit|permits|permitted|may|can|override|overrides|replace|replaces|"
+    r"skip|skips|disable|disables|ignore|ignores|relax|relaxes|weaken|weakens|remove|removes|omit|omits|"
+    r"bypass|bypasses)\b",
+    re.IGNORECASE,
+)
+NEGATED_PREFIX = re.compile(
+    r"^\s*-\s*(?:do not|does not|never|must not|should not|cannot|can't|without)\b",
+    re.IGNORECASE,
+)
+RISKY_ACTIONS = re.compile(
+    r"(force[- ]push|reset --hard|checkout --|destructive reset|--no-verify|skip verification|push main|"
+    r"rebase protected|rebase default)",
+    re.IGNORECASE,
+)
+WORKTREE_CONTRACT = re.compile(
+    r"\bscripts/worktree\s+(?:create|rebase|push|cleanup|list)\b",
+    re.IGNORECASE,
+)
+PRECEDENCE_OVERRIDE = re.compile(
+    r"(local|repo(?:sitory)?).*(wins|override|overrides).*(core|shared)",
+    re.IGNORECASE,
+)
+WORKTREE_ROOT_PATTERN = re.compile(r"^\s*-\s*`WORKTREE_MAIN_ROOT`:\s*`(/[^`]+)`\s*$")
+WAIVER_FIELDS = {"rule", "scope", "duration", "risk", "mitigation", "approved_by"}
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Validate that AGENTS.local.md stays additive relative to workflow-core."
+    )
+    parser.add_argument("--repo-root", required=True, help="Absolute path to the consumer repository root.")
+    parser.add_argument(
+        "--shared-root",
+        default="shared/workflow-core",
+        help="Path to the shared workflow-core checkout relative to repo root.",
+    )
+    parser.add_argument(
+        "--local-overlay",
+        default="AGENTS.local.md",
+        help="Path to the local overlay file relative to repo root.",
+    )
+    return parser.parse_args()
+
+
+def fail(message: str) -> None:
+    print(f"[validate-guardrails] {message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        fail(f"Required file not found: {path}")
+
+
+def parse_sections(lines: list[str]) -> list[tuple[str, list[str]]]:
+    sections: list[tuple[str, list[str]]] = []
+    current_heading: str | None = None
+    current_body: list[str] = []
+    for line in lines[1:]:
+        if line.startswith("## "):
+            if current_heading is not None:
+                sections.append((current_heading, current_body))
+            current_heading = line[3:].strip()
+            current_body = []
+            continue
+        if current_heading is not None:
+            current_body.append(line)
+    if current_heading is not None:
+        sections.append((current_heading, current_body))
+    return sections
+
+
+def validate_waivers(body: list[str]) -> list[str]:
+    errors: list[str] = []
+    current_name: str | None = None
+    current_fields: set[str] = set()
+
+    def flush() -> None:
+        nonlocal current_name, current_fields
+        if current_name is None:
+            return
+        missing = sorted(WAIVER_FIELDS - current_fields)
+        if missing:
+            errors.append(
+                f"Waiver '{current_name}' is missing required fields: {', '.join(missing)}."
+            )
+        current_name = None
+        current_fields = set()
+
+    for raw_line in body:
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("### "):
+            flush()
+            current_name = line[4:].strip()
+            continue
+        if current_name is None:
+            errors.append("Waivers section must define each waiver under a `### <waiver-id>` heading.")
+            break
+        field_match = re.match(r"^-\s*`?([a-z_]+)`?:\s+.+$", line)
+        if field_match:
+            current_fields.add(field_match.group(1))
+
+    flush()
+    return errors
+
+
+def main() -> int:
+    args = parse_args()
+    repo_root = Path(args.repo_root).resolve()
+    shared_root = (repo_root / args.shared_root).resolve()
+    local_overlay = (repo_root / args.local_overlay).resolve()
+
+    shared_core = shared_root / "AGENTS.core.md"
+    local_policy = shared_root / "playbooks/meta/local-adaptation-policy.md"
+    if not shared_core.exists():
+        fail(f"Shared core policy file not found: {shared_core}")
+    if not local_policy.exists():
+        fail(f"Local adaptation policy file not found: {local_policy}")
+
+    lines = read_text(local_overlay).splitlines()
+    if not lines:
+        fail(f"Local overlay is empty: {local_overlay}")
+    if not re.match(r"^#\s+AGENTS\.local\.md\b", lines[0]):
+        fail("AGENTS.local.md must start with a `# AGENTS.local.md ...` title line.")
+
+    sections = parse_sections(lines)
+    if not sections:
+        fail("AGENTS.local.md must define at least one `##` section.")
+
+    config_section = next((body for heading, body in sections if heading == "Local Config"), None)
+    if config_section is None:
+        fail("AGENTS.local.md must include a `## Local Config` section.")
+
+    worktree_root = None
+    for line in config_section:
+        match = WORKTREE_ROOT_PATTERN.match(line)
+        if match:
+            worktree_root = match.group(1)
+            break
+    if worktree_root is None:
+        fail("`## Local Config` must define `WORKTREE_MAIN_ROOT` as an absolute path in backticks.")
+
+    errors: list[str] = []
+    for heading, body in sections:
+        if heading == "Waivers":
+            errors.extend(validate_waivers(body))
+            continue
+        if heading == "References":
+            continue
+        for raw_line in body:
+            stripped = raw_line.strip()
+            if not stripped or stripped.startswith("<!--"):
+                continue
+            if WORKTREE_CONTRACT.search(stripped) and not NEGATED_PREFIX.match(stripped):
+                errors.append(
+                    "Local overlays must not redefine the shared `scripts/worktree` command contract."
+                )
+            if PRECEDENCE_OVERRIDE.search(stripped):
+                errors.append("Local overlays must not override shared/core instruction precedence.")
+            if RISKY_ACTIONS.search(stripped) and not NEGATED_PREFIX.match(stripped):
+                errors.append(
+                    f"Risky operation language must remain forbidden outside waivers: `{stripped}`"
+                )
+            if heading != "Local Config" and PERMISSIVE_VERBS.search(stripped) and not NEGATED_PREFIX.match(stripped):
+                errors.append(
+                    f"Local overlay language must stay additive/stricter, not permissive: `{stripped}`"
+                )
+
+    if errors:
+        for error in errors:
+            print(f"[validate-guardrails] {error}", file=sys.stderr)
+        return 1
+
+    print(
+        "[validate-guardrails] OK: AGENTS.local.md is configuration-focused and preserves shared guardrails."
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import difflib
+import re
+import sys
+from pathlib import Path
+
+
+GENERATOR_NAME = "shared/workflow-core/scripts/workflow/render-agents"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Render the consumer AGENTS.md entrypoint from workflow-core and AGENTS.local.md."
+    )
+    parser.add_argument("--repo-root", required=True, help="Absolute path to the consumer repository root.")
+    parser.add_argument(
+        "--shared-root",
+        default="shared/workflow-core",
+        help="Path to the shared workflow-core checkout relative to repo root.",
+    )
+    parser.add_argument(
+        "--local-overlay",
+        default="AGENTS.local.md",
+        help="Path to the local overlay file relative to repo root.",
+    )
+    parser.add_argument(
+        "--output",
+        default="AGENTS.md",
+        help="Path to the rendered AGENTS entrypoint relative to repo root.",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Exit non-zero instead of writing when the rendered output differs.",
+    )
+    return parser.parse_args()
+
+
+def fail(message: str) -> None:
+    print(f"[render-agents] {message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        fail(f"Required file not found: {path}")
+
+
+def trim_blank_edges(lines: list[str]) -> list[str]:
+    start = 0
+    end = len(lines)
+    while start < end and lines[start].strip() == "":
+        start += 1
+    while end > start and lines[end - 1].strip() == "":
+        end -= 1
+    return lines[start:end]
+
+
+def parse_overlay(path: Path) -> tuple[str, list[str], list[tuple[str, list[str]]]]:
+    lines = read_text(path).splitlines()
+    if not lines:
+        fail(f"Local overlay is empty: {path}")
+    title_line = lines[0].strip()
+    preamble: list[str] = []
+    sections: list[tuple[str, list[str]]] = []
+    current_heading: str | None = None
+    current_body: list[str] = []
+
+    for line in lines[1:]:
+        if line.startswith("## "):
+            if current_heading is not None:
+                sections.append((current_heading, trim_blank_edges(current_body)))
+            elif preamble:
+                preamble = trim_blank_edges(preamble)
+            current_heading = line[3:].strip()
+            current_body = []
+            continue
+        if current_heading is None:
+            preamble.append(line)
+        else:
+            current_body.append(line)
+
+    if current_heading is not None:
+        sections.append((current_heading, trim_blank_edges(current_body)))
+    else:
+        preamble = trim_blank_edges(preamble)
+
+    return title_line, preamble, sections
+
+
+def derive_repo_name(title_line: str, repo_root: Path) -> str:
+    match = re.match(r"^#\s+AGENTS\.local\.md\s+[—-]\s+(.+?)\s+Local Overlay$", title_line)
+    if match:
+        return match.group(1).strip()
+    raw_name = repo_root.name.replace("-", " ").replace("_", " ").strip()
+    return " ".join(part.capitalize() for part in raw_name.split()) or "Repository"
+
+
+def build_output(repo_root: Path, shared_root: Path, local_overlay: Path) -> str:
+    shared_core = shared_root / "AGENTS.core.md"
+    if not shared_core.exists():
+        fail(f"Shared core policy file not found: {shared_core}")
+
+    title_line, preamble, sections = parse_overlay(local_overlay)
+    repo_name = derive_repo_name(title_line, repo_root)
+    shared_root_rel = shared_root.relative_to(repo_root).as_posix()
+    local_overlay_rel = local_overlay.relative_to(repo_root).as_posix()
+
+    lines: list[str] = [
+        f"<!-- BEGIN GENERATED: {GENERATOR_NAME} -->",
+        f"# AGENTS.md — {repo_name} Policy Entrypoint",
+        "",
+        f"This file is generated from `{shared_root_rel}/AGENTS.core.md` and `{local_overlay_rel}`.",
+        "Do not edit manually; run `scripts/workflow/render-agents`.",
+        "",
+        "## Policy Sources",
+        f"- Shared core policy: `{shared_root_rel}/AGENTS.core.md`",
+        "- Shared worktree playbooks:",
+        f"  - `{shared_root_rel}/playbooks/git/worktree-workflow.md`",
+        f"  - `{shared_root_rel}/playbooks/git/worktree-operations.md`",
+        f"  - `{shared_root_rel}/playbooks/git/rebase-guide.md`",
+        f"- Local overlay: `{local_overlay_rel}`",
+        "",
+        "## Instruction Precedence",
+        "- explicit in-thread user instruction",
+        f"- `{local_overlay_rel}`",
+        f"- `{shared_root_rel}/AGENTS.core.md`",
+        f"- playbooks/docs (`{shared_root_rel}/playbooks/**` first, then local `playbooks/**`)",
+        "",
+        "## Local Overlay Contract",
+        "- Keep `AGENTS.local.md` configuration-focused.",
+        "- Local rules may be additive/stricter only.",
+        "- Local rules may not weaken shared core non-negotiables.",
+        "- Worktree workflow is shared and must not be redefined locally.",
+    ]
+
+    if preamble:
+        lines.extend(["", "## Local Overlay Notes", *preamble])
+
+    for heading, body in sections:
+        lines.extend(["", f"## {heading}"])
+        if body:
+            lines.extend(body)
+
+    lines.extend(["", f"<!-- END GENERATED: {GENERATOR_NAME} -->", ""])
+    return "\n".join(lines)
+
+
+def main() -> int:
+    args = parse_args()
+    repo_root = Path(args.repo_root).resolve()
+    shared_root = (repo_root / args.shared_root).resolve()
+    local_overlay = (repo_root / args.local_overlay).resolve()
+    output_path = (repo_root / args.output).resolve()
+
+    rendered = build_output(repo_root=repo_root, shared_root=shared_root, local_overlay=local_overlay)
+
+    if args.check:
+        existing = output_path.read_text(encoding="utf-8") if output_path.exists() else ""
+        if existing != rendered:
+            diff = difflib.unified_diff(
+                existing.splitlines(),
+                rendered.splitlines(),
+                fromfile=str(output_path),
+                tofile=f"{output_path} (rendered)",
+                lineterm="",
+            )
+            print("\n".join(diff), file=sys.stderr)
+            print(
+                "[render-agents] AGENTS.md is out of date. Run `scripts/workflow/render-agents`.",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"[render-agents] OK: {output_path.relative_to(repo_root)} is up to date.")
+        return 0
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(rendered, encoding="utf-8")
+    print(f"[render-agents] Wrote {output_path.relative_to(repo_root)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
