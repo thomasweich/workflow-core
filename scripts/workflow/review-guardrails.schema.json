@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "summary",
+    "conflicts",
+    "placement_findings",
+    "resolved_or_ok"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["pass", "warn", "fail"]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "title", "details", "files", "resolution"],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["warn", "fail"]
+          },
+          "title": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "resolution": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "placement_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "severity",
+          "instruction_summary",
+          "current_location",
+          "suggested_location",
+          "reason",
+          "files",
+          "resolution"
+        ],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["info", "warn", "fail"]
+          },
+          "instruction_summary": {
+            "type": "string"
+          },
+          "current_location": {
+            "type": "string"
+          },
+          "suggested_location": {
+            "type": "string",
+            "enum": ["shared-core", "local", "wrapper", "no-change"]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "resolution": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "resolved_or_ok": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

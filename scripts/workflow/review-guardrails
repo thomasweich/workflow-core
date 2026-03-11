@@ -1,0 +1,289 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+
+SCRIPT_NAME = "review-guardrails"
+DEFAULT_FILE_PATTERNS = [
+    "AGENTS.md",
+    "AGENTS.local.md",
+    "playbooks/README.md",
+    "playbooks/git/*.md",
+    "playbooks/planning/*.md",
+    "playbooks/testing/**/*.md",
+    "playbooks/meta/agents-evolution.md",
+    "playbooks/meta/agents-candidates.md",
+]
+DEFAULT_SHARED_PATTERNS = [
+    "AGENTS.core.md",
+    "AGENTS.local.template.md",
+    "playbooks/git/*.md",
+    "playbooks/planning/*.md",
+    "playbooks/testing/**/*.md",
+    "playbooks/meta/local-adaptation-policy.md",
+    "playbooks/meta/agents-evolution.md",
+    "playbooks/meta/shared-workflow-upgrade.md",
+    "playbooks/meta/guardrail-review-rubric.md",
+]
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run a prompt-based review of shared-core versus local workflow instructions."
+    )
+    parser.add_argument("--repo-root", required=True, help="Absolute path to the consumer repository root.")
+    parser.add_argument(
+        "--shared-root",
+        default="shared/workflow-core",
+        help="Path to the shared workflow-core checkout relative to repo root.",
+    )
+    parser.add_argument(
+        "--fail-on",
+        choices=("fail", "warn", "never"),
+        default="fail",
+        help="Which prompt-review status should cause a non-zero exit.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print raw JSON result only.",
+    )
+    parser.add_argument(
+        "--output",
+        help="Write the raw JSON response to a file.",
+    )
+    parser.add_argument(
+        "--include",
+        action="append",
+        default=[],
+        help="Additional repo-relative files to include in the review.",
+    )
+    parser.add_argument(
+        "--model",
+        help="Override the model passed to Codex. Defaults to WORKFLOW_GUARDRAILS_REVIEW_MODEL or CODEX_MODEL.",
+    )
+    parser.add_argument(
+        "--codex-bin",
+        default=os.environ.get("WORKFLOW_GUARDRAILS_REVIEW_CODEX_BIN", "codex"),
+        help="Codex CLI binary to execute.",
+    )
+    return parser.parse_args()
+
+
+def fail(message: str) -> None:
+    print(f"[{SCRIPT_NAME}] {message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        fail(f"Required file not found: {path}")
+
+
+def collect_paths(base_root: Path, patterns: list[str]) -> list[Path]:
+    collected: list[Path] = []
+    seen: set[Path] = set()
+    for pattern in patterns:
+        for path in sorted(base_root.glob(pattern)):
+            if path.is_file() and path not in seen:
+                collected.append(path)
+                seen.add(path)
+    return collected
+
+
+def build_prompt(repo_root: Path, shared_root: Path, files: list[Path], rubric_path: Path) -> str:
+    rubric_text = read_text(rubric_path)
+    sections: list[str] = [
+        "You are reviewing workflow guardrail files for conflicts and placement mistakes.",
+        "Use the rubric below and return only JSON that matches the provided schema.",
+        "",
+        "Focus strictly on:",
+        "- whether local instructions conflict with shared-core",
+        "- whether any finding needs resolution now",
+        "- whether instructions live in the right place: shared-core, local, or thin wrapper",
+        "",
+        "Do not flag these by themselves:",
+        "- generated AGENTS snapshots that include shared-core content",
+        "- thin local wrappers pointing at shared-core",
+        "- repository-specific tooling notes that do not change workflow policy",
+        "",
+        "Rubric:",
+        rubric_text,
+        "",
+        "Files under review:",
+    ]
+
+    for path in files:
+        rel_path = path.relative_to(repo_root).as_posix()
+        sections.extend(
+            [
+                "",
+                f"===== BEGIN FILE: {rel_path} =====",
+                read_text(path),
+                f"===== END FILE: {rel_path} =====",
+            ]
+        )
+
+    sections.extend(
+        [
+            "",
+            "Return JSON only. Use `status=fail` for actual conflicts or required resolutions, `warn` for non-blocking placement cleanup, and `pass` when the integration is clean.",
+        ]
+    )
+    return "\n".join(sections)
+
+
+def should_fail(status: str, fail_on: str) -> bool:
+    if fail_on == "never":
+        return False
+    if fail_on == "warn":
+        return status in {"warn", "fail"}
+    return status == "fail"
+
+
+def render_human_report(result: dict[str, object]) -> str:
+    lines = [
+        f"[{SCRIPT_NAME}] Status: {result['status']}",
+        f"[{SCRIPT_NAME}] Summary: {result['summary']}",
+    ]
+
+    conflicts = result.get("conflicts", [])
+    if conflicts:
+        lines.append(f"[{SCRIPT_NAME}] Conflicts:")
+        for item in conflicts:
+            lines.append(f"- [{item['severity'].upper()}] {item['title']}")
+            lines.append(f"  files: {', '.join(item['files'])}")
+            lines.append(f"  details: {item['details']}")
+            lines.append(f"  resolution: {item['resolution']}")
+
+    placement = result.get("placement_findings", [])
+    if placement:
+        lines.append(f"[{SCRIPT_NAME}] Placement Findings:")
+        for item in placement:
+            lines.append(f"- [{item['severity'].upper()}] {item['instruction_summary']}")
+            lines.append(f"  current: {item['current_location']}")
+            lines.append(f"  suggested: {item['suggested_location']}")
+            lines.append(f"  files: {', '.join(item['files'])}")
+            lines.append(f"  reason: {item['reason']}")
+            lines.append(f"  resolution: {item['resolution']}")
+
+    resolved = result.get("resolved_or_ok", [])
+    if resolved:
+        lines.append(f"[{SCRIPT_NAME}] OK / Confirmed:")
+        for item in resolved:
+            lines.append(f"- {item}")
+
+    return "\n".join(lines)
+
+
+def main() -> int:
+    args = parse_args()
+    repo_root = Path(args.repo_root).resolve()
+    shared_root = (repo_root / args.shared_root).resolve()
+    rubric_path = shared_root / "playbooks/meta/guardrail-review-rubric.md"
+    schema_path = shared_root / "scripts/workflow/review-guardrails.schema.json"
+
+    if not rubric_path.exists():
+        fail(f"Rubric file not found: {rubric_path}")
+    if not schema_path.exists():
+        fail(f"Schema file not found: {schema_path}")
+
+    files = collect_paths(repo_root, DEFAULT_FILE_PATTERNS)
+    files.extend(path for path in collect_paths(shared_root, DEFAULT_SHARED_PATTERNS) if path not in files)
+    for include in args.include:
+        include_path = (repo_root / include).resolve()
+        if include_path not in files:
+            if not include_path.exists():
+                fail(f"Included file not found: {include_path}")
+            files.append(include_path)
+
+    required_paths = [
+        repo_root / "AGENTS.local.md",
+        shared_root / "AGENTS.core.md",
+        shared_root / "playbooks/meta/local-adaptation-policy.md",
+        rubric_path,
+    ]
+    for path in required_paths:
+        if not path.exists():
+            fail(f"Required review input not found: {path}")
+        if path not in files:
+            files.append(path)
+
+    files = sorted(files, key=lambda path: path.relative_to(repo_root).as_posix())
+    prompt = build_prompt(repo_root=repo_root, shared_root=shared_root, files=files, rubric_path=rubric_path)
+
+    model = args.model or os.environ.get("WORKFLOW_GUARDRAILS_REVIEW_MODEL") or os.environ.get("CODEX_MODEL")
+
+    with tempfile.NamedTemporaryFile("w+", encoding="utf-8", delete=False) as response_file:
+        response_path = Path(response_file.name)
+
+    try:
+        command = [
+            args.codex_bin,
+            "--sandbox",
+            "read-only",
+            "--ask-for-approval",
+            "never",
+        ]
+        if model:
+            command.extend(["--model", model])
+        command.extend(
+            [
+                "exec",
+                "--ephemeral",
+                "-C",
+                str(repo_root),
+                "--output-schema",
+                str(schema_path),
+                "-o",
+                str(response_path),
+                "-",
+            ]
+        )
+        completed = subprocess.run(
+            command,
+            input=prompt,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        fail(f"Codex CLI not found: {args.codex_bin}")
+
+    if completed.returncode != 0:
+        stderr = completed.stderr.strip()
+        stdout = completed.stdout.strip()
+        details = stderr or stdout or f"exit code {completed.returncode}"
+        fail(f"Codex review command failed: {details}")
+
+    try:
+        raw = response_path.read_text(encoding="utf-8")
+        result = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        fail(f"Prompt review did not return valid JSON: {exc}")
+    finally:
+        response_path.unlink(missing_ok=True)
+
+    if args.output:
+        Path(args.output).write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    if args.json:
+        print(json.dumps(result, indent=2, sort_keys=True))
+    else:
+        print(render_human_report(result))
+
+    status = str(result.get("status", "fail"))
+    return 1 if should_fail(status=status, fail_on=args.fail_on) else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

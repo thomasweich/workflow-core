@@ -15,6 +15,7 @@ Allow repository-local customization while preserving shared core guardrails.
 ## Allowed Local Adaptations
 - Configuration inputs required by shared policy (for example `WORKTREE_MAIN_ROOT`).
 - Repository-specific paths and project structure metadata.
+- Repository-specific tooling notes that do not weaken shared workflow policy.
 - Additional safety checks or stricter constraints.
 - Toolchain/runtime specifics only when not already prescribed by shared core.
 - Additional testing/documentation requirements.

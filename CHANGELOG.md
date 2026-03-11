@@ -5,6 +5,12 @@ All notable changes to `workflow-core` will be documented in this file.
 The format is based on Keep a Changelog and this project follows SemVer.
 
 ## [Unreleased]
+### Changed
+- `render-agents` now emits a composed `AGENTS.md` snapshot that includes shared-core policy content plus the local overlay, so shared-core changes produce generated-file drift.
+- `render-agents` now fails fast when required shared playbook files are missing.
+- `validate-guardrails` now allows repository-local tooling notes while rejecting dangerous force-push and permissive workflow-override guidance more precisely.
+- Added optional `review-guardrails` prompt-based review with a shared rubric and structured output schema for shared-core versus local conflicts and placement review.
+- Added `playbooks/meta/consumer-repo-integration.md` with concrete bootstrap and migration checklists, wrapper templates, and minimal CI wiring for consumer repos.
 
 ## [0.2.0] - 2026-03-10
 ### Added

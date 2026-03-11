@@ -7,19 +7,14 @@ import sys
 from pathlib import Path
 
 
-PERMISSIVE_VERBS = re.compile(
-    r"\b(?:allow|allows|allowed|permit|permits|permitted|may|can|override|overrides|replace|replaces|"
-    r"skip|skips|disable|disables|ignore|ignores|relax|relaxes|weaken|weakens|remove|removes|omit|omits|"
-    r"bypass|bypasses)\b",
-    re.IGNORECASE,
-)
 NEGATED_PREFIX = re.compile(
     r"^\s*-\s*(?:do not|does not|never|must not|should not|cannot|can't|without)\b",
     re.IGNORECASE,
 )
 RISKY_ACTIONS = re.compile(
-    r"(force[- ]push|reset --hard|checkout --|destructive reset|--no-verify|skip verification|push main|"
-    r"rebase protected|rebase default)",
+    r"(?:force[- ]push|force-with-lease|git\s+push\b.*(?:--force(?:-with-lease)?|-f)\b|"
+    r"push\b.*(?:--force(?:-with-lease)?|-f)\b|reset --hard|checkout --|destructive reset|"
+    r"--no-verify|skip verification|bypass verification|push main|allow-main|rebase protected|rebase default)",
     re.IGNORECASE,
 )
 WORKTREE_CONTRACT = re.compile(
@@ -28,6 +23,14 @@ WORKTREE_CONTRACT = re.compile(
 )
 PRECEDENCE_OVERRIDE = re.compile(
     r"(local|repo(?:sitory)?).*(wins|override|overrides).*(core|shared)",
+    re.IGNORECASE,
+)
+PERMISSIVE_WEAKENING = re.compile(
+    r"\b(?:may|can|allowed to|permitted to)\b.*\b(?:skip|bypass|disable|ignore|override|replace|remove|omit|weaken|relax)\b",
+    re.IGNORECASE,
+)
+CORE_WEAKENING = re.compile(
+    r"\b(?:weaken|override|replace|ignore|bypass|remove|omit|relax)\b.*\b(?:shared|core|non-negotiable)\b",
     re.IGNORECASE,
 )
 WORKTREE_ROOT_PATTERN = re.compile(r"^\s*-\s*`WORKTREE_MAIN_ROOT`:\s*`(/[^`]+)`\s*$")
@@ -159,8 +162,6 @@ def main() -> int:
         if heading == "Waivers":
             errors.extend(validate_waivers(body))
             continue
-        if heading == "References":
-            continue
         for raw_line in body:
             stripped = raw_line.strip()
             if not stripped or stripped.startswith("<!--"):
@@ -173,12 +174,14 @@ def main() -> int:
                 errors.append("Local overlays must not override shared/core instruction precedence.")
             if RISKY_ACTIONS.search(stripped) and not NEGATED_PREFIX.match(stripped):
                 errors.append(
-                    f"Risky operation language must remain forbidden outside waivers: `{stripped}`"
+                    f"Dangerous command or workflow text must remain forbidden outside waivers: `{stripped}`"
                 )
-            if heading != "Local Config" and PERMISSIVE_VERBS.search(stripped) and not NEGATED_PREFIX.match(stripped):
+            if PERMISSIVE_WEAKENING.search(stripped):
                 errors.append(
-                    f"Local overlay language must stay additive/stricter, not permissive: `{stripped}`"
+                    f"Local overlay language must not permissively weaken shared policy: `{stripped}`"
                 )
+            if CORE_WEAKENING.search(stripped) and not NEGATED_PREFIX.match(stripped):
+                errors.append(f"Local overlays must not weaken shared/core policy text: `{stripped}`")
 
     if errors:
         for error in errors:

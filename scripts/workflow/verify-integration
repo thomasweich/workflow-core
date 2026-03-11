@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_NAME="verify-integration"
+
+fail() {
+  printf '[%s] %s\n' "$SCRIPT_NAME" "$1" >&2
+  exit 1
+}
+
+resolve_path() {
+  local repo_root="$1"
+  local raw_path="$2"
+  python3 - "$repo_root" "$raw_path" <<'PY'
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1]).resolve()
+raw_path = Path(sys.argv[2])
+target = raw_path if raw_path.is_absolute() else repo_root / raw_path
+print(target.resolve())
+PY
+}
+
+repo_root=""
+shared_root="shared/workflow-core"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --repo-root)
+      [[ $# -ge 2 ]] || fail '--repo-root requires a value.'
+      repo_root="$2"
+      shift 2
+      ;;
+    --shared-root)
+      [[ $# -ge 2 ]] || fail '--shared-root requires a value.'
+      shared_root="$2"
+      shift 2
+      ;;
+    -h|--help)
+      cat <<'EOF'
+Usage: verify-integration --repo-root <path> [--shared-root <path>]
+
+Run shared workflow-core integration checks for a consumer repository.
+EOF
+      exit 0
+      ;;
+    *)
+      fail "Unknown argument: $1"
+      ;;
+  esac
+done
+
+[[ -n "$repo_root" ]] || fail '--repo-root is required.'
+
+repo_root="$(resolve_path "$PWD" "$repo_root")"
+shared_root="$(resolve_path "$repo_root" "$shared_root")"
+
+[[ -d "$repo_root" ]] || fail "Repository root does not exist: $repo_root"
+[[ -d "$shared_root" ]] || fail "Shared root does not exist: $shared_root"
+
+render_wrapper="$repo_root/scripts/workflow/render-agents"
+validate_wrapper="$repo_root/scripts/workflow/validate-guardrails"
+review_wrapper="$repo_root/scripts/workflow/review-guardrails"
+verify_wrapper="$repo_root/scripts/workflow/verify-integration"
+
+for wrapper in "$render_wrapper" "$validate_wrapper" "$review_wrapper" "$verify_wrapper"; do
+  [[ -f "$wrapper" ]] || fail "Expected local wrapper not found: $wrapper"
+done
+
+printf '[%s] Shell syntax checks...\n' "$SCRIPT_NAME"
+bash -n "$render_wrapper"
+bash -n "$validate_wrapper"
+bash -n "$review_wrapper"
+bash -n "$verify_wrapper"
+bash -n "$shared_root/scripts/workflow/verify-integration"
+
+printf '[%s] workflow-core Python syntax checks...\n' "$SCRIPT_NAME"
+python3 -m py_compile "$shared_root/scripts/workflow/render-agents"
+python3 -m py_compile "$shared_root/scripts/workflow/validate-guardrails"
+python3 -m py_compile "$shared_root/scripts/workflow/review-guardrails"
+
+printf '[%s] workflow-core tooling tests...\n' "$SCRIPT_NAME"
+if [[ "${WORKFLOW_GUARDRAILS_SKIP_CORE_TESTS:-0}" == "1" ]]; then
+  printf '[%s] Skipping workflow-core tooling tests (WORKFLOW_GUARDRAILS_SKIP_CORE_TESTS=1).\n' "$SCRIPT_NAME"
+else
+  "$shared_root/tests/test_workflow_tooling.sh"
+fi
+
+printf '[%s] Workflow guardrail checks...\n' "$SCRIPT_NAME"
+"$shared_root/scripts/workflow/render-agents" --repo-root "$repo_root" --shared-root "$shared_root" --check
+"$shared_root/scripts/workflow/validate-guardrails" --repo-root "$repo_root" --shared-root "$shared_root"
+if [[ "${WORKFLOW_GUARDRAILS_PROMPT_REVIEW:-0}" == "1" ]]; then
+  printf '[%s] Prompt-based workflow guardrail review...\n' "$SCRIPT_NAME"
+  "$shared_root/scripts/workflow/review-guardrails" \
+    --repo-root "$repo_root" \
+    --shared-root "$shared_root" \
+    --fail-on "${WORKFLOW_GUARDRAILS_PROMPT_REVIEW_FAIL_ON:-fail}"
+fi
+
+printf '[%s] OK\n' "$SCRIPT_NAME"
