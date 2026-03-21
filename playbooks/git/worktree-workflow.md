@@ -18,7 +18,7 @@ code_paths:
 - Base ref: `origin/main`
 - Branch pattern: `agent/<task-slug>`
 - Worktree path pattern: sibling of main worktree root (`<main-worktree-parent>/<branch-name>`)
-- Launch behavior for `create`: open iTerm2 and run `hapi codex --yolo`
+- Launch behavior for `create`: attempt to open a terminal session and run `codex --dangerously-bypass-approvals-and-sandbox`
 
 ## Required Local Config Input
 - `WORKTREE_MAIN_ROOT`: absolute path to the consumer repository's main worktree root.
@@ -36,9 +36,10 @@ code_paths:
 ## Primary Commands
 1. Create task worktree:
    - `scripts/worktree create <task-slug>`
-   - Add `--no-codex` to skip iTerm2/Codex auto-launch.
+   - Add `--no-codex` to skip terminal/Codex auto-launch.
    - If `--no-codex` is used, immediately print the exact manual command:
      - `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox`
+   - If auto-launch is unavailable, print the same manual command instead of failing.
 2. Rebase task branch onto latest base:
    - `scripts/worktree rebase --branch <branch-name>`
 3. Push task branch with verification:
@@ -69,7 +70,8 @@ code_paths:
 13. Documentation updates are part of implementation and should be done before final verification for push.
 14. Before push, run the repository verify command and record what ran.
 15. If `--no-codex` is used during `create`, immediately print the manual `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox` command.
-16. `push` must explicitly target `<remote>/<branch>` and correct upstream tracking when local tracking is mismatched.
+16. If auto-launch is unavailable in the current environment, print the same manual command and continue.
+17. `push` must explicitly target `<remote>/<branch>` and correct upstream tracking when local tracking is mismatched.
 
 ## Create Behavior
 - `create` should be idempotent for branch-to-worktree mapping:

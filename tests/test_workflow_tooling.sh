@@ -65,6 +65,17 @@ EOF
   chmod +x "$stub_path"
 }
 
+write_slow_codex_stub() {
+  local stub_path="$1"
+  cat <<'EOF' >"$stub_path"
+#!/usr/bin/env bash
+set -euo pipefail
+
+sleep "${WORKFLOW_GUARDRAILS_REVIEW_STUB_SLEEP_SECONDS:-2}"
+EOF
+  chmod +x "$stub_path"
+}
+
 new_repo() {
   local repo_root="$1"
   mkdir -p "$repo_root/shared/workflow-core/playbooks/meta" "$repo_root/shared/workflow-core/playbooks/git"
@@ -394,6 +405,11 @@ printf '[workflow-core tests] prompt review fails on blocking conflict...\n'
 export WORKFLOW_GUARDRAILS_REVIEW_STUB_RESPONSE='{"status":"fail","summary":"Local guidance conflicts with shared-core.","conflicts":[{"severity":"fail","title":"Force-push guidance conflicts with shared non-negotiables.","details":"A local note recommends git push --force-with-lease.","files":["AGENTS.local.md"],"resolution":"Remove the force-push guidance or move it into an explicit waiver with approval metadata."}],"placement_findings":[],"resolved_or_ok":[]}'
 assert_fails "$tmp_dir/review-fail.log" env WORKFLOW_GUARDRAILS_REVIEW_CODEX_BIN="$tmp_dir/codex-stub" "$REVIEW_SCRIPT" --repo-root "$repo_review"
 assert_contains "$tmp_dir/review-fail.log" 'Force-push guidance conflicts with shared non-negotiables.'
+
+printf '[workflow-core tests] prompt review times out cleanly...\n'
+write_slow_codex_stub "$tmp_dir/codex-slow-stub"
+assert_fails "$tmp_dir/review-timeout.log" env WORKFLOW_GUARDRAILS_REVIEW_CODEX_BIN="$tmp_dir/codex-slow-stub" "$REVIEW_SCRIPT" --repo-root "$repo_review" --timeout-seconds 1
+assert_contains "$tmp_dir/review-timeout.log" 'timed out after 1 seconds'
 
 printf '[workflow-core tests] shared verify-integration runs consumer integration checks...\n'
 repo_verify="$tmp_dir/repo-verify"

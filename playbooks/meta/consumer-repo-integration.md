@@ -132,6 +132,7 @@ If the repository needs language/runtime setup for its own `scripts/verify`, add
    - `scripts/workflow/verify-integration`
    - `scripts/verify`
    - optional `scripts/workflow/review-guardrails --fail-on never`
+   - add `--timeout-seconds <n>` if the prompt review needs a longer budget in your environment
 12. Review and commit:
    - pinned `workflow-core` revision
    - local overlay
@@ -164,6 +165,7 @@ If the repository needs language/runtime setup for its own `scripts/verify`, add
 10. Run:
     - `scripts/workflow/verify-integration`
     - `scripts/verify`
+    - optional `scripts/workflow/review-guardrails --fail-on never --timeout-seconds <n>`
 11. Document the migration in the PR:
     - pinned `workflow-core` revision
     - which local files became thin wrappers

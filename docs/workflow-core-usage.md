@@ -86,6 +86,7 @@ This review uses a fixed rubric to check:
 - whether each instruction belongs in shared-core, local files, or a thin local wrapper
 
 Treat this as a semantic review layer on top of deterministic validation, not a replacement for `scripts/workflow/validate-guardrails`.
+The review is time-bounded by default; use `--timeout-seconds <n>` or `WORKFLOW_GUARDRAILS_REVIEW_TIMEOUT_SECONDS` to raise the limit when needed.
 
 ## Shared Integration Verifier
 Consumer repos should keep the integration orchestration inside `workflow-core`.

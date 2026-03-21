@@ -45,6 +45,7 @@ Use `playbooks/meta/consumer-repo-integration.md` for the exact bootstrap and mi
 4. Run consumer verification and policy validation before merge.
    - `scripts/workflow/verify-integration`
    - Optional full repo verify around it: `scripts/verify`
+   - Optional prompt review with a bounded timeout: `scripts/workflow/review-guardrails --fail-on never --timeout-seconds <n>`
 
 ## Versioning
 - Use SemVer tags (`vMAJOR.MINOR.PATCH`).
