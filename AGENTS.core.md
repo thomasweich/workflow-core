@@ -53,14 +53,23 @@ This file defines repository-independent baseline rules for agent-driven enginee
 - Pure refactors/test-only/cosmetic-only changes can skip docs unless they alter operational behavior.
 - Keep process docs concise and enforceable; move detailed rationale into playbooks.
 
-## 6) Testing and Verification
+## 6) Code Size Standard
+- Keep non-generated source files near a target of 300 lines.
+- Treat 450 lines as a hard limit for non-generated source files unless explicitly waived by the user.
+- If touching a non-generated file already above 450 lines, include same-task extraction to reduce size or request an explicit waiver.
+- Do not add new top-level functions/classes to non-generated files above 450 lines; extract to a new module instead.
+- Keep functions near 40 lines and do not exceed 80 lines unless explicitly waived by the user.
+- Include test source and CSS/SCSS source in these limits.
+- Exclude generated files, migrations, vendored code, build output, lockfiles, and large test fixtures.
+
+## 7) Testing and Verification
 - Define expected behavior before implementing behavior changes.
 - Add or update deterministic tests for primary, edge, and failure paths.
 - Avoid snapshot-only assertions for behavior changes.
 - Run targeted checks during iteration and repository full verification before push.
 - In final reporting, record what ran, what was skipped, and residual risk.
 
-## 7) Planning Standard
+## 8) Planning Standard
 - Use a plan for non-trivial work.
 - Every plan must include:
   - executable checklist (`[ ]` / `[x]`)
@@ -70,7 +79,7 @@ This file defines repository-independent baseline rules for agent-driven enginee
   - timestamped progress log
 - Use shared templates in `playbooks/planning/`.
 
-## 8) Local Adaptation Contract
+## 9) Local Adaptation Contract
 - Local overlays should be minimal and primarily provide local configuration values (for example `WORKTREE_MAIN_ROOT`).
 - Local overlays may add repository-specific rules and stricter constraints only when needed.
 - Local overlays may not weaken core non-negotiables.
