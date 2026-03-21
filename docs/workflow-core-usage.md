@@ -18,6 +18,7 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
 - Shared in `workflow-core`:
   - non-negotiables
   - worktree workflow and command contract
+  - approved-plan execution and atomic-commit defaults
   - planning/testing/documentation process guardrails
   - AGENTS-evolution workflow for promoting policy changes
 - Local in consumer repo:
@@ -34,7 +35,10 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
 3. Set required local config values:
    - `WORKTREE_MAIN_ROOT=<absolute-path-to-main-worktree-root>`
    - Derive task-worktree parent as `dirname(WORKTREE_MAIN_ROOT)`.
-4. Create effective policy entrypoint:
+4. Add or adapt `scripts/worktree` in the consumer repo so it satisfies the shared command contract.
+   - `scripts/worktree --help` should succeed and advertise `create`, `rebase`, `push`, `cleanup`, and `list`.
+   - `scripts/worktree list` should be safe and non-mutating.
+5. Create effective policy entrypoint:
    - `AGENTS.md` in consumer root, assembled from shared core + local overlay.
    - The generated file should contain a composed snapshot of the shared core policy plus the local overlay, not just pointers.
    - Add wrapper commands:
@@ -43,10 +47,11 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
      - `scripts/workflow/review-guardrails`
      - `scripts/workflow/verify-integration`
    - Commit the rendered `AGENTS.md`.
-5. Add validation checks in CI:
+6. Add validation checks in CI:
    - core version pin is explicit
    - effective policy file is up to date
    - local overlay does not weaken core non-negotiables
+   - local `scripts/worktree` satisfies the shared contract
    - Run the shared-owned integration suite:
      - `scripts/workflow/verify-integration`
    - Optional full repo verification around it:
@@ -99,6 +104,7 @@ This wrapper should delegate to `shared/workflow-core/scripts/workflow/verify-in
 - shared workflow-core regression tests
 - generated `AGENTS.md` drift detection
 - local overlay validation
+- local `scripts/worktree` contract validation
 - optional prompt-based semantic review
 
 ## Upgrade Flow

@@ -25,11 +25,30 @@ Execution mode:
 - You may recommend parallelization when workstreams are independent and materially reduce risk or elapsed time.
 - If parallel is approved, include stream ownership boundaries, branch/worktree mapping, integration order, and integration verification.
 
+Execution authority:
+- User approval of a formal plan authorizes end-to-end execution of that plan's sequential steps by default.
+- After approval, progress updates should inform the user about status and decisions, not ask for redundant per-step permission.
+- Pause only for blockers, ambiguous product decisions, destructive/history-risk actions, missing required access/configuration, or user-gated git actions.
+- Completed verified atomic batches should be committed proactively unless the user explicitly asked to hold commits or batch them differently.
+
 Plan storage:
 - Simple: in-thread mini checklist + timestamped progress updates.
 - Normal/Complex: active plan file at `plans/<yyyy-mm-dd>-<slug>.md` plus in-thread progress updates.
 - When done or canceled: move the plan to `plans/archive/<yyyy-mm-dd>-<slug>.md`.
 - `plans/` files are committed by default so humans and agents share the same execution context.
+
+Shared-required versus consumer-local planning details:
+- Shared-required defaults:
+  - planning depth model (`Simple` / `Normal` / `Complex`)
+  - required formal-plan fields listed below
+  - active formal plan storage under `plans/`
+  - archived formal plan storage under `plans/archive/`
+  - plan files committed by default
+- Consumer-local additions are allowed for:
+  - rollout or migration runbooks
+  - stricter local checklist items or approval gates
+  - local plan indexes, wrapper docs, or references to shared templates
+- Consumer repos should not relocate active formal plans outside `plans/` or drop required plan fields while claiming default shared-core compliance.
 
 Use templates:
 - `playbooks/planning/combined-plan-template.md`

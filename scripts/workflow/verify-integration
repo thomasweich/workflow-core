@@ -63,10 +63,13 @@ render_wrapper="$repo_root/scripts/workflow/render-agents"
 validate_wrapper="$repo_root/scripts/workflow/validate-guardrails"
 review_wrapper="$repo_root/scripts/workflow/review-guardrails"
 verify_wrapper="$repo_root/scripts/workflow/verify-integration"
+worktree_script="$repo_root/scripts/worktree"
 
 for wrapper in "$render_wrapper" "$validate_wrapper" "$review_wrapper" "$verify_wrapper"; do
   [[ -f "$wrapper" ]] || fail "Expected local wrapper not found: $wrapper"
 done
+[[ -f "$worktree_script" ]] || fail "Expected local worktree command not found: $worktree_script"
+[[ -x "$worktree_script" ]] || fail "Expected local worktree command to be executable: $worktree_script"
 
 printf '[%s] Shell syntax checks...\n' "$SCRIPT_NAME"
 bash -n "$render_wrapper"
@@ -74,6 +77,15 @@ bash -n "$validate_wrapper"
 bash -n "$review_wrapper"
 bash -n "$verify_wrapper"
 bash -n "$shared_root/scripts/workflow/verify-integration"
+
+printf '[%s] Worktree contract checks...\n' "$SCRIPT_NAME"
+worktree_help="$("$worktree_script" --help 2>&1)" || fail "scripts/worktree --help failed."
+for subcommand in create rebase push cleanup list; do
+  if ! grep -Fq "$subcommand" <<<"$worktree_help"; then
+    fail "scripts/worktree --help does not advertise required subcommand: $subcommand"
+  fi
+done
+"$worktree_script" list >/dev/null 2>&1 || fail "scripts/worktree list failed."
 
 printf '[%s] workflow-core Python syntax checks...\n' "$SCRIPT_NAME"
 python3 -m py_compile "$shared_root/scripts/workflow/render-agents"

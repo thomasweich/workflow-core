@@ -102,6 +102,37 @@ EOF
 install_local_wrappers() {
   local repo_root="$1"
   mkdir -p "$repo_root/scripts/workflow"
+  cat <<'EOF' >"$repo_root/scripts/worktree"
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -eq 0 || "$1" == "--help" || "$1" == "-h" ]]; then
+  cat <<'HELP'
+usage: worktree [-h] {create,rebase,push,cleanup,list} ...
+
+Shared worktree command contract for this repository.
+
+positional arguments:
+  {create,rebase,push,cleanup,list}
+    create
+    rebase
+    push
+    cleanup
+    list
+HELP
+  exit 0
+fi
+
+case "$1" in
+  create|rebase|push|cleanup|list)
+    exit 0
+    ;;
+  *)
+    printf 'unknown worktree command: %s\n' "$1" >&2
+    exit 1
+    ;;
+esac
+EOF
   cat <<'EOF' >"$repo_root/scripts/workflow/render-agents"
 #!/usr/bin/env bash
 set -euo pipefail
@@ -131,6 +162,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 exec "$REPO_ROOT/shared/workflow-core/scripts/workflow/verify-integration" --repo-root "$REPO_ROOT" "$@"
 EOF
   chmod +x \
+    "$repo_root/scripts/worktree" \
     "$repo_root/scripts/workflow/render-agents" \
     "$repo_root/scripts/workflow/validate-guardrails" \
     "$repo_root/scripts/workflow/review-guardrails" \
@@ -428,5 +460,51 @@ EOF
 "$repo_verify/shared/workflow-core/scripts/workflow/render-agents" --repo-root "$repo_verify" >/dev/null
 WORKFLOW_GUARDRAILS_SKIP_CORE_TESTS=1 \
   "$VERIFY_INTEGRATION_SCRIPT" --repo-root "$repo_verify" --shared-root "$repo_verify/shared/workflow-core" >/dev/null
+
+printf '[workflow-core tests] shared verify-integration requires local scripts/worktree...\n'
+repo_verify_missing_worktree="$tmp_dir/repo-verify-missing-worktree"
+new_repo "$repo_verify_missing_worktree"
+install_shared_tooling "$repo_verify_missing_worktree"
+install_local_wrappers "$repo_verify_missing_worktree"
+cat <<'EOF' >"$repo_verify_missing_worktree/AGENTS.local.md"
+# AGENTS.local.md — Verify Missing Worktree Repo Local Overlay
+
+## Local Config
+- `WORKTREE_MAIN_ROOT`: `/tmp/verify-missing/main`
+EOF
+rm "$repo_verify_missing_worktree/scripts/worktree"
+assert_fails "$tmp_dir/verify-missing-worktree.log" \
+  env WORKFLOW_GUARDRAILS_SKIP_CORE_TESTS=1 \
+  "$VERIFY_INTEGRATION_SCRIPT" --repo-root "$repo_verify_missing_worktree" --shared-root "$repo_verify_missing_worktree/shared/workflow-core"
+assert_contains "$tmp_dir/verify-missing-worktree.log" 'Expected local worktree command not found'
+
+printf '[workflow-core tests] shared verify-integration checks worktree help contract...\n'
+repo_verify_bad_worktree="$tmp_dir/repo-verify-bad-worktree"
+new_repo "$repo_verify_bad_worktree"
+install_shared_tooling "$repo_verify_bad_worktree"
+install_local_wrappers "$repo_verify_bad_worktree"
+cat <<'EOF' >"$repo_verify_bad_worktree/AGENTS.local.md"
+# AGENTS.local.md — Verify Bad Worktree Repo Local Overlay
+
+## Local Config
+- `WORKTREE_MAIN_ROOT`: `/tmp/verify-bad/main`
+EOF
+cat <<'EOF' >"$repo_verify_bad_worktree/scripts/worktree"
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ $# -eq 0 || "$1" == "--help" || "$1" == "-h" ]]; then
+  printf 'usage: worktree {create,rebase,push,list}\n'
+  exit 0
+fi
+if [[ "$1" == "list" ]]; then
+  exit 0
+fi
+exit 0
+EOF
+chmod +x "$repo_verify_bad_worktree/scripts/worktree"
+assert_fails "$tmp_dir/verify-bad-worktree.log" \
+  env WORKFLOW_GUARDRAILS_SKIP_CORE_TESTS=1 \
+  "$VERIFY_INTEGRATION_SCRIPT" --repo-root "$repo_verify_bad_worktree" --shared-root "$repo_verify_bad_worktree/shared/workflow-core"
+assert_contains "$tmp_dir/verify-bad-worktree.log" 'does not advertise required subcommand: cleanup'
 
 printf '[workflow-core tests] OK\n'

@@ -27,7 +27,7 @@ Shared, repository-independent workflow guardrails and planning playbooks.
 ## LLM Shortcut
 For first-time adoption or migration in a consumer repository, tell the LLM:
 
-`Do what's written in shared/workflow-core/playbooks/meta/consumer-repo-integration.md. Do not commit or push unless I explicitly ask.`
+`Do what's written in shared/workflow-core/playbooks/meta/consumer-repo-integration.md. Keep executing approved sequential plan steps end to end. Do not push unless I explicitly ask.`
 
 ## Consumer Integration (Initial)
 Use `playbooks/meta/consumer-repo-integration.md` for the exact bootstrap and migration checklists, wrapper script template, and minimal CI wiring.
@@ -37,12 +37,13 @@ Use `playbooks/meta/consumer-repo-integration.md` for the exact bootstrap and mi
    - Git subtree.
 2. Create a repo-local addendum (`AGENTS.local.md`) for local specifics.
    - Primarily set `WORKTREE_MAIN_ROOT`.
-3. Compose the consumer's effective `AGENTS.md` using:
+3. Add or adapt a consumer-local `scripts/worktree` that satisfies the shared contract.
+4. Compose the consumer's effective `AGENTS.md` using:
    - shared `AGENTS.core.md`
    - local `AGENTS.local.md`
    - thin local wrappers for `render-agents`, `validate-guardrails`, `review-guardrails`, and `verify-integration`
    - The generated file should contain a composed snapshot of both sources.
-4. Run consumer verification and policy validation before merge.
+5. Run consumer verification and policy validation before merge.
    - `scripts/workflow/verify-integration`
    - Optional full repo verify around it: `scripts/verify`
    - Optional prompt review with a bounded timeout: `scripts/workflow/review-guardrails --fail-on never --timeout-seconds <n>`

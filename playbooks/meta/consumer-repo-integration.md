@@ -25,6 +25,7 @@ Provide one repeatable setup for both greenfield consumer repositories and migra
 - `shared/workflow-core/`
 - `AGENTS.local.md`
 - `AGENTS.md`
+- `scripts/worktree`
 - `scripts/workflow/render-agents`
 - `scripts/workflow/validate-guardrails`
 - `scripts/workflow/review-guardrails`
@@ -52,6 +53,27 @@ Create wrappers for:
 - `validate-guardrails`
 - `review-guardrails`
 - `verify-integration`
+
+## Required `scripts/worktree` Contract
+Consumer repositories must provide a local `scripts/worktree` command that satisfies the shared contract referenced by policy.
+
+Minimum expectations:
+- the file exists at `scripts/worktree`
+- it is executable
+- `scripts/worktree --help` succeeds without mutating repository state
+- the `--help` output advertises:
+  - `create`
+  - `rebase`
+  - `push`
+  - `cleanup`
+  - `list`
+- `scripts/worktree list` is safe and non-mutating so shared verification can call it directly
+
+Implementation options:
+- native local implementation that follows the shared contract
+- compatibility wrapper around an existing repo-local worktree tool, as long as the shared command names and behavior are preserved
+
+Do not treat a consumer migration as complete while the generated policy references `scripts/worktree` commands that the repository does not actually provide.
 
 ## Minimal `scripts/verify`
 If a consumer repo does not already have a repo-specific verify script, start with:
@@ -110,33 +132,35 @@ If the repository needs language/runtime setup for its own `scripts/verify`, add
    - Pin to an explicit tag or commit before merge.
 2. Create `AGENTS.local.md` from `AGENTS.local.template.md`.
 3. Set `WORKTREE_MAIN_ROOT` to the absolute path for the repository's main worktree root.
-4. Keep `AGENTS.local.md` minimal:
+4. Add or adapt `scripts/worktree` to the shared contract.
+5. Keep `AGENTS.local.md` minimal:
    - repo-specific config
    - optional local tooling notes
    - optional stricter constraints
-5. Add thin wrapper scripts for:
+6. Add thin wrapper scripts for:
    - `scripts/workflow/render-agents`
    - `scripts/workflow/validate-guardrails`
    - `scripts/workflow/review-guardrails`
    - `scripts/workflow/verify-integration`
-6. Make the wrappers executable.
-7. Add `scripts/verify` or update the existing verify script to call `scripts/workflow/verify-integration`.
-8. Generate the effective entrypoint:
+7. Make the wrappers and `scripts/worktree` executable.
+8. Add `scripts/verify` or update the existing verify script to call `scripts/workflow/verify-integration`.
+9. Generate the effective entrypoint:
    - `scripts/workflow/render-agents`
-9. Optionally add thin local wrappers for shared playbooks you want to keep locally discoverable.
+10. Optionally add thin local wrappers for shared playbooks you want to keep locally discoverable.
    - planning README/templates
    - testing behavior-test playbook
    - AGENTS-evolution playbook
-10. Add CI that runs `scripts/workflow/verify-integration`.
-11. Run:
+11. Add CI that runs `scripts/workflow/verify-integration`.
+12. Run:
    - `scripts/workflow/verify-integration`
    - `scripts/verify`
    - optional `scripts/workflow/review-guardrails --fail-on never`
    - add `--timeout-seconds <n>` if the prompt review needs a longer budget in your environment
-12. Review and commit:
+13. Review and commit:
    - pinned `workflow-core` revision
    - local overlay
    - generated `AGENTS.md`
+   - `scripts/worktree`
    - wrapper scripts
    - CI wiring
 
@@ -144,6 +168,7 @@ If the repository needs language/runtime setup for its own `scripts/verify`, add
 1. Inventory current workflow instructions and enforcement points.
    - `AGENTS.md`
    - `playbooks/**`
+   - legacy worktree tooling (`scripts/worktree`, worktree helpers, shell aliases, docs)
    - local guardrail or validation scripts
    - CI jobs that already check policy or generated docs
 2. Classify each instruction before moving it:
@@ -152,25 +177,28 @@ If the repository needs language/runtime setup for its own `scripts/verify`, add
    - keep as a thin wrapper if the content is shared but should remain locally discoverable
 3. Add `workflow-core` as a pinned dependency at `shared/workflow-core/`.
 4. Create `AGENTS.local.md` and move only local configuration and additive repo-specific notes into it.
-5. Replace the repo-local `AGENTS.md` with the generated entrypoint:
+5. Add or adapt local `scripts/worktree` to the shared contract before treating the migration as complete.
+   - compatibility wrappers are acceptable if the shared command names and behavior are preserved
+6. Replace the repo-local `AGENTS.md` with the generated entrypoint:
    - add wrapper scripts first
    - run `scripts/workflow/render-agents`
-6. Replace copied shared playbooks with thin wrappers or direct references.
-7. Update repo verification and CI to delegate workflow-core checks through:
+7. Replace copied shared playbooks with thin wrappers or direct references.
+8. Update repo verification and CI to delegate workflow-core checks through:
    - `scripts/workflow/verify-integration`
-8. Run semantic conflict and placement review:
+9. Run semantic conflict and placement review:
    - `scripts/workflow/review-guardrails --fail-on never`
-9. Review the migration diff for dropped instructions.
+10. Review the migration diff for dropped instructions.
    - Every removed rule should now live in shared-core, `AGENTS.local.md`, a local supplement, or be intentionally deleted.
-10. Run:
+11. Run:
     - `scripts/workflow/verify-integration`
     - `scripts/verify`
     - optional `scripts/workflow/review-guardrails --fail-on never --timeout-seconds <n>`
-11. Document the migration in the PR:
+12. Document the migration in the PR:
     - pinned `workflow-core` revision
     - which local files became thin wrappers
     - which instructions moved into shared-core
     - which local-only supplements remain
+    - how `scripts/worktree` was implemented or adapted
     - any explicit waivers that were preserved
 
 ## Placement Rules During Migration
@@ -193,6 +221,7 @@ If the repository needs language/runtime setup for its own `scripts/verify`, add
 ## Done Criteria
 - `AGENTS.md` is generated and up to date.
 - `AGENTS.local.md` passes structural validation.
+- `scripts/worktree` satisfies the shared contract and passes integration verification.
 - CI runs `scripts/workflow/verify-integration`.
 - Shared-core owns the integration logic; the consumer repo keeps only thin wrappers and repo-specific checks.
 - No remaining local rule weakens or silently duplicates shared-core policy.

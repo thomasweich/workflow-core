@@ -14,6 +14,16 @@ code_paths:
 - Derived tasks root: `dirname(WORKTREE_MAIN_ROOT)`.
 - Task worktree target: `<derived-tasks-root>/<branch-name>`.
 
+## Contract Sanity Requirements
+- `scripts/worktree --help` must succeed without mutating repository state.
+- The `--help` output must advertise:
+  - `create`
+  - `rebase`
+  - `push`
+  - `cleanup`
+  - `list`
+- `scripts/worktree list` must be safe and non-mutating so shared verification can call it directly.
+
 ## create
 - Command: `scripts/worktree create <task-slug>`
 - Purpose: create `agent/<slug>` branch from `origin/main` and worktree at sibling-of-main-root path.

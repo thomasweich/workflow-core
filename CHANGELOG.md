@@ -6,6 +6,11 @@ The format is based on Keep a Changelog and this project follows SemVer.
 
 ## [Unreleased]
 ### Changed
+- Approved formal plans now authorize end-to-end sequential execution by default, with progress updates for visibility rather than redundant per-step permission prompts.
+- Shared-core now defaults to proactively committing completed verified atomic batches unless the user asked to hold commits or batch them differently.
+- Consumer integration guidance now requires a concrete `scripts/worktree` contract decision instead of assuming the command exists implicitly.
+- Shared `verify-integration` now validates the consumer `scripts/worktree` contract via `--help` and safe `list` execution.
+- Planning docs now distinguish shared-required plan structure and storage from allowed consumer-local planning supplements more explicitly.
 - Shared push guidance now prefers landing verified changes on `origin/main` when a push is explicitly requested and direct main update is safe; otherwise agents should push the task branch and report the blocker.
 - `render-agents` now emits a composed `AGENTS.md` snapshot that includes shared-core policy content plus the local overlay, so shared-core changes produce generated-file drift.
 - `render-agents` now fails fast when required shared playbook files are missing.

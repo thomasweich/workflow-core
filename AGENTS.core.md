@@ -38,7 +38,11 @@ This file defines repository-independent baseline rules for agent-driven enginee
   - `playbooks/git/worktree-workflow.md`
   - `playbooks/git/worktree-operations.md`
 
-## 3) Collaboration Safety
+## 3) Collaboration Safety and Execution
+- When the user approves an active plan or explicitly says to continue, execute the plan's sequential steps end-to-end without waiting for per-step confirmation.
+- Pause only for blockers, ambiguous product decisions, destructive/history-risk actions, missing required access/configuration, or user-gated git actions.
+- Use progress updates for visibility, not to request redundant permission.
+- Commit completed verified atomic batches proactively on the active task branch unless the user asked to hold commits or batch them differently.
 - Treat unknown local edits as owned by another human/agent.
 - Do not revert or discard unrelated edits.
 - If shared files are modified by others, apply minimal hunk-level edits around required lines.

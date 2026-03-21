@@ -17,6 +17,7 @@ Allow repository-local customization while preserving shared core guardrails.
 - Repository-specific paths and project structure metadata.
 - Repository-specific tooling notes that do not weaken shared workflow policy.
 - Additional safety checks or stricter constraints.
+- Stricter commit batching or hold-commit preferences, as long as they do not weaken shared safety rules or push gates.
 - Toolchain/runtime specifics only when not already prescribed by shared core.
 - Additional testing/documentation requirements.
 
