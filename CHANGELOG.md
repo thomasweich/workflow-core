@@ -6,6 +6,7 @@ The format is based on Keep a Changelog and this project follows SemVer.
 
 ## [Unreleased]
 ### Changed
+- Shared push guidance now prefers landing verified changes on `origin/main` when a push is explicitly requested and direct main update is safe; otherwise agents should push the task branch and report the blocker.
 - `render-agents` now emits a composed `AGENTS.md` snapshot that includes shared-core policy content plus the local overlay, so shared-core changes produce generated-file drift.
 - `render-agents` now fails fast when required shared playbook files are missing.
 - `validate-guardrails` now allows repository-local tooling notes while rejecting dangerous force-push and permissive workflow-override guidance more precisely.

@@ -58,17 +58,18 @@ code_paths:
 2. Run rebase/merge/push/cleanup only when the user explicitly requested integration/push/cleanup.
 3. Default to sequential execution with one task worktree/branch unless parallel implementation is explicitly approved.
 4. Create additional task worktrees/branches only after explicit user approval.
-5. Do not push `main` unless explicitly requested.
-6. Require clean tracked changes for operations unless an explicit override flag is used.
-7. Before push, ensure branch includes latest `origin/main`.
-8. After merge, cleanup should remove worktree, local branch, and remote branch.
-9. Treat unknown local edits as owned by another human/agent unless explicitly told otherwise.
-10. Never revert or discard unrelated edits during worktree operations.
-11. If shared files changed in parallel, apply minimal hunk-level changes and escalate when intent is unclear.
-12. Documentation updates are part of implementation and should be done before final verification for push.
-13. Before push, run the repository verify command and record what ran.
-14. If `--no-codex` is used during `create`, immediately print the manual `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox` command.
-15. `push` must explicitly target `<remote>/<branch>` and correct upstream tracking when local tracking is mismatched.
+5. When the user explicitly requests push, try to land verified changes on `origin/main` first unless they specifically asked for a branch push.
+6. If direct main push is blocked, unsupported by the repo tooling, or unsafe, push `<remote>/<branch>` instead and report the blocker.
+7. Require clean tracked changes for operations unless an explicit override flag is used.
+8. Before push, ensure branch includes latest `origin/main`.
+9. After merge, cleanup should remove worktree, local branch, and remote branch.
+10. Treat unknown local edits as owned by another human/agent unless explicitly told otherwise.
+11. Never revert or discard unrelated edits during worktree operations.
+12. If shared files changed in parallel, apply minimal hunk-level changes and escalate when intent is unclear.
+13. Documentation updates are part of implementation and should be done before final verification for push.
+14. Before push, run the repository verify command and record what ran.
+15. If `--no-codex` is used during `create`, immediately print the manual `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox` command.
+16. `push` must explicitly target `<remote>/<branch>` and correct upstream tracking when local tracking is mismatched.
 
 ## Create Behavior
 - `create` should be idempotent for branch-to-worktree mapping:
