@@ -22,6 +22,8 @@ code_paths:
 Provide one repeatable setup for both greenfield consumer repositories and migrations from repo-local workflow instructions.
 
 ## Standard Consumer Files
+- `plans/`
+- `plans/archive/`
 - `shared/workflow-core/`
 - `AGENTS.local.md`
 - `AGENTS.md`
@@ -150,13 +152,17 @@ If the repository needs language/runtime setup for its own `scripts/verify`, add
    - planning README/templates
    - testing behavior-test playbook
    - AGENTS-evolution playbook
-11. Add CI that runs `scripts/workflow/verify-integration`.
-12. Run:
+11. Normalize formal plan storage to the shared contract.
+   - active formal plans live in `plans/`
+   - completed/canceled/superseded formal plans live in `plans/archive/`
+   - do not leave completed formal plans in `plans/`
+12. Add CI that runs `scripts/workflow/verify-integration`.
+13. Run:
    - `scripts/workflow/verify-integration`
    - `scripts/verify`
    - optional `scripts/workflow/review-guardrails --fail-on never`
    - add `--timeout-seconds <n>` if the prompt review needs a longer budget in your environment
-13. Review and commit:
+14. Review and commit:
    - pinned `workflow-core` revision
    - local overlay
    - generated `AGENTS.md`
@@ -185,15 +191,19 @@ If the repository needs language/runtime setup for its own `scripts/verify`, add
 7. Replace copied shared playbooks with thin wrappers or direct references.
 8. Update repo verification and CI to delegate workflow-core checks through:
    - `scripts/workflow/verify-integration`
-9. Run semantic conflict and placement review:
+9. Normalize formal plan storage to the shared contract.
+   - active formal plans stay in `plans/`
+   - completed/canceled/superseded formal plans move to `plans/archive/`
+   - archive any stale completed plan still sitting in `plans/`
+10. Run semantic conflict and placement review:
    - `scripts/workflow/review-guardrails --fail-on never`
-10. Review the migration diff for dropped instructions.
+11. Review the migration diff for dropped instructions.
    - Every removed rule should now live in shared-core, `AGENTS.local.md`, a local supplement, or be intentionally deleted.
-11. Run:
+12. Run:
     - `scripts/workflow/verify-integration`
     - `scripts/verify`
     - optional `scripts/workflow/review-guardrails --fail-on never --timeout-seconds <n>`
-12. Document the migration in the PR:
+13. Document the migration in the PR:
     - pinned `workflow-core` revision
     - which local files became thin wrappers
     - which instructions moved into shared-core
@@ -222,6 +232,7 @@ If the repository needs language/runtime setup for its own `scripts/verify`, add
 - `AGENTS.md` is generated and up to date.
 - `AGENTS.local.md` passes structural validation.
 - `scripts/worktree` satisfies the shared contract and passes integration verification.
+- `plans/` contains only active formal plans; completed/canceled/superseded formal plans are archived under `plans/archive/`.
 - CI runs `scripts/workflow/verify-integration`.
 - Shared-core owns the integration logic; the consumer repo keeps only thin wrappers and repo-specific checks.
 - No remaining local rule weakens or silently duplicates shared-core policy.

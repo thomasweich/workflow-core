@@ -76,6 +76,9 @@ This file defines repository-independent baseline rules for agent-driven enginee
 
 ## 8) Planning Standard
 - Use a plan for non-trivial work.
+- Treat `plans/` as active-only plan storage.
+- Archive completed, canceled, or superseded formal plans to `plans/archive/` in the same task before final reporting.
+- Do not leave completed, canceled, or superseded formal plans in `plans/`.
 - Every plan must include:
   - executable checklist (`[ ]` / `[x]`)
   - execution mode and approval status

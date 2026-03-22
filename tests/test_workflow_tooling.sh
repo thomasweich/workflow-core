@@ -200,6 +200,16 @@ install_shared_tooling() {
     "$repo_root/shared/workflow-core/tests/test_workflow_tooling.sh"
 }
 
+printf '[workflow-core tests] planning docs require active-only plan storage and same-task archiving...\n'
+assert_contains "$CORE_ROOT/AGENTS.core.md" 'Treat `plans/` as active-only plan storage.'
+assert_contains "$CORE_ROOT/AGENTS.core.md" 'Archive completed, canceled, or superseded formal plans to `plans/archive/` in the same task before final reporting.'
+assert_contains "$CORE_ROOT/playbooks/planning/README.md" '`plans/` is active-only storage.'
+assert_contains "$CORE_ROOT/playbooks/planning/README.md" 'Treat the archive move as part of done criteria, not optional cleanup after the task.'
+assert_contains "$CORE_ROOT/playbooks/planning/combined-plan-template.md" 'Plan archived to `plans/archive/` on completion or cancellation'
+assert_contains "$CORE_ROOT/playbooks/planning/implementation-plan-template.md" 'Plan archived to `plans/archive/` on completion or cancellation'
+assert_contains "$CORE_ROOT/playbooks/planning/product-plan-template.md" 'Plan archived to `plans/archive/` on completion, cancellation, or handoff to a replacement implementation plan'
+assert_contains "$CORE_ROOT/playbooks/meta/consumer-repo-integration.md" '`plans/` contains only active formal plans; completed/canceled/superseded formal plans are archived under `plans/archive/`.'
+
 printf '[workflow-core tests] render golden output...\n'
 repo_render="$tmp_dir/repo-render"
 new_repo "$repo_render"

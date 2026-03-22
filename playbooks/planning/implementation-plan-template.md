@@ -41,6 +41,7 @@ code_paths: []
 - [ ] Test matrix and commands defined
 - [ ] Documentation updates mapped
 - [ ] Release/rollout criteria defined
+- [ ] Plan archived to `plans/archive/` on completion or cancellation
 
 ## Verification
 - Targeted checks:
@@ -51,4 +52,5 @@ code_paths: []
 ## Progress Log
 - `YYYY-MM-DD HH:MM` - Step: <done>
 - `YYYY-MM-DD HH:MM` - Verification: <result>
+- `YYYY-MM-DD HH:MM` - Archived: <plan moved to plans/archive/...>`
 - `YYYY-MM-DD HH:MM` - Blocker/decision: <details>

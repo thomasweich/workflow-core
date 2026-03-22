@@ -20,6 +20,7 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
   - worktree workflow and command contract
   - approved-plan execution and atomic-commit defaults
   - planning/testing/documentation process guardrails
+  - formal-plan lifecycle: active plans live in `plans/`, completed/canceled/superseded plans move to `plans/archive/` in the same task
   - AGENTS-evolution workflow for promoting policy changes
 - Local in consumer repo:
   - configuration values only (primarily `WORKTREE_MAIN_ROOT`)
@@ -75,6 +76,10 @@ Recommended shared playbooks to wrap locally:
 - `playbooks/planning/*.md`
 - `playbooks/testing/behavior-test-design.md`
 - `playbooks/meta/agents-evolution.md`
+
+Consumer repos should treat the shared planning storage contract as active guidance:
+- `plans/` is for active formal plans only
+- `plans/archive/` is for completed, canceled, or superseded formal plans
 
 Keep local supplements only for repository-specific:
 - command catalogs

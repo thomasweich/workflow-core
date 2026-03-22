@@ -41,6 +41,7 @@ code_paths: []
 - [ ] Test commands and pass criteria defined
 - [ ] Documentation updates identified
 - [ ] Done criteria defined
+- [ ] Plan archived to `plans/archive/` on completion or cancellation
 
 ## Testing Plan
 - Targeted checks:
@@ -55,9 +56,11 @@ code_paths: []
 ## Done Criteria
 - Functional outcomes:
 - Quality gates:
+- Formal plan archived from `plans/` to `plans/archive/`
 
 ## Progress Log
 - `YYYY-MM-DD HH:MM` - Planned: <what was planned>
 - `YYYY-MM-DD HH:MM` - Executed: <what changed>
 - `YYYY-MM-DD HH:MM` - Verified: <tests/docs validated>
+- `YYYY-MM-DD HH:MM` - Archived: <plan moved to plans/archive/...>`
 - `YYYY-MM-DD HH:MM` - Next: <next step or blocker>

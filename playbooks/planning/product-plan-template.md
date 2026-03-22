@@ -54,6 +54,7 @@ code_paths: []
 - [ ] Parallel stream proposal defined (if parallel recommended)
 - [ ] Test commands and pass criteria defined
 - [ ] Documentation updates identified
+- [ ] Plan archived to `plans/archive/` on completion, cancellation, or handoff to a replacement implementation plan
 
 ## Decision Log
 - `YYYY-MM-DD` - Decision: <what and why>
@@ -62,4 +63,5 @@ code_paths: []
 - `YYYY-MM-DD HH:MM` - Planned: <what was planned>
 - `YYYY-MM-DD HH:MM` - Decision: <what and why>
 - `YYYY-MM-DD HH:MM` - Verified: <tests/docs validated>
+- `YYYY-MM-DD HH:MM` - Archived: <plan moved to plans/archive/...>`
 - `YYYY-MM-DD HH:MM` - Next: <next step or blocker>

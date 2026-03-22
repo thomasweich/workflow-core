@@ -16,7 +16,7 @@ Shared, repository-independent workflow guardrails and planning playbooks.
 - `tests/test_workflow_tooling.sh`: regression checks for the shared tooling.
 - `playbooks/git/`: shared worktree and rebase operational playbooks.
 - `playbooks/planning/`: plan templates.
-- `playbooks/planning/README.md`: planning standards and plan-storage rules.
+- `playbooks/planning/README.md`: planning standards, active-plan storage rules, and required archive-on-completion lifecycle.
 - `playbooks/testing/behavior-test-design.md`: shared behavior-spec testing workflow.
 - `playbooks/meta/local-adaptation-policy.md`: allowed local customization model.
 - `playbooks/meta/agents-evolution.md`: shared policy-promotion workflow.

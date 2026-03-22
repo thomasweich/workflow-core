@@ -37,12 +37,20 @@ Plan storage:
 - When done or canceled: move the plan to `plans/archive/<yyyy-mm-dd>-<slug>.md`.
 - `plans/` files are committed by default so humans and agents share the same execution context.
 
+Required lifecycle:
+- `plans/` is active-only storage. A formal plan left in `plans/` means the work is still active.
+- Before final reporting on completed, canceled, or superseded planned work: move the plan to `plans/archive/<yyyy-mm-dd>-<slug>.md`.
+- If one planned task finishes and a follow-on planned task starts, archive the completed plan before creating or continuing the next active plan.
+- Do not leave completed, canceled, or superseded formal plans in `plans/`.
+- Treat the archive move as part of done criteria, not optional cleanup after the task.
+
 Shared-required versus consumer-local planning details:
 - Shared-required defaults:
   - planning depth model (`Simple` / `Normal` / `Complex`)
   - required formal-plan fields listed below
   - active formal plan storage under `plans/`
   - archived formal plan storage under `plans/archive/`
+  - same-task archive on completion/cancellation/supersession
   - plan files committed by default
 - Consumer-local additions are allowed for:
   - rollout or migration runbooks
@@ -63,3 +71,7 @@ Required in every formal plan:
 - full-suite repo verification command unless a stricter superset is required
 - docs impact checklist
 - progress log with timestamps
+
+Required closeout for every formal plan:
+- when the work completes, is canceled, or is superseded, move the plan to `plans/archive/` in the same task
+- update the progress log to record the completion/cancellation/archive step before archiving when practical
