@@ -5,6 +5,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 ALLOWED_ROLES = {"user", "assistant", "system", "tool"}
 BLOCK_PART_TYPES = {
@@ -59,7 +60,7 @@ def normalize_export_payload(payload: dict[str, Any], override_mode: str | None 
         normalized_messages = [assistant_messages[-1]]
 
     title = str(payload.get("title") or conversation_id).strip() or conversation_id
-    source_url = str(payload.get("source_url") or "").strip()
+    source_url = canonicalize_source_url(str(payload.get("source_url") or "").strip(), conversation_id)
     exported_at = str(payload.get("exported_at") or current_timestamp()).strip()
 
     return {
@@ -71,6 +72,22 @@ def normalize_export_payload(payload: dict[str, Any], override_mode: str | None 
         "message_count": len(normalized_messages),
         "messages": normalized_messages,
     }
+
+
+def canonicalize_source_url(source_url: str, conversation_id: str) -> str:
+    if not source_url:
+        return ""
+    if not conversation_id:
+        return source_url
+
+    parsed = urlparse(source_url)
+    if parsed.scheme not in {"http", "https"}:
+        return source_url
+    if parsed.netloc != "chatgpt.com":
+        return source_url
+    if parsed.path != f"/c/{conversation_id}":
+        return source_url
+    return f"https://chatgpt.com/c/{conversation_id}"
 
 
 def normalize_message(message: dict[str, Any]) -> dict[str, Any]:
@@ -207,4 +224,3 @@ def yaml_quote(value: str) -> str:
 
 def current_timestamp() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-

@@ -62,9 +62,71 @@ Use this in the current logged-in `chatgpt.com` page context to list recent visi
 }
 ```
 
-## Primary extraction path: in-page fetch
+## Primary extraction path: current visible DOM
 
-This snippet assumes the current page is already on the target conversation URL.
+Use this on the current conversation page. It targets the current ChatGPT thread DOM shape,
+which exposes each message root with `data-message-author-role`.
+
+```js
+() => {
+  const conversationId = (location.pathname.match(/\/c\/([^/?#]+)/) || [null, null])[1];
+  const canonicalUrl = conversationId ? `${location.origin}/c/${conversationId}` : location.href;
+  const messageNodes = Array.from(document.querySelectorAll("[data-message-author-role]"));
+
+  const messages = messageNodes
+    .map((node) => {
+      const role = node.getAttribute("data-message-author-role");
+      if (role !== "user" && role !== "assistant") {
+        return null;
+      }
+
+      const codeBlocks = Array.from(node.querySelectorAll("pre code")).map((code) => {
+        const language =
+          Array.from(code.classList).find((value) => value.startsWith("language-"))?.replace("language-", "") || "";
+        return {
+          type: "code_block",
+          language,
+          text: code.textContent || "",
+        };
+      });
+
+      const clone = node.cloneNode(true);
+      clone.querySelectorAll("pre").forEach((pre) => pre.remove());
+      const textContent = (clone.innerText || "").replace(/\n{3,}/g, "\n\n").trim();
+
+      if (codeBlocks.length > 0) {
+        const parts = textContent ? [{ type: "paragraph", text: textContent }, ...codeBlocks] : codeBlocks;
+        return { role, parts };
+      }
+
+      if (!textContent) {
+        return null;
+      }
+
+      return { role, markdown: textContent };
+    })
+    .filter(Boolean);
+
+  return {
+    ok: messages.length > 0,
+    error: messages.length > 0 ? null : "Current thread DOM did not expose any user or assistant messages.",
+    payload: {
+      title: document.title.replace(/\s*\|\s*ChatGPT\s*$/i, "").trim() || "untitled-chat",
+      source_url: canonicalUrl,
+      conversation_id: conversationId || "unknown-conversation",
+      exported_at: new Date().toISOString(),
+      mode: "full",
+      messages,
+    },
+  };
+}
+```
+
+## Optional fallback path: private in-page fetch
+
+Use this only when the DOM path cannot preserve enough structure and the current ChatGPT
+session still exposes the private conversation endpoint. This endpoint is brittle and may
+return `404` even while the page is fully visible and logged in.
 
 ```js
 async () => {
@@ -86,6 +148,7 @@ async () => {
     };
   }
 
+  const canonicalUrl = `${location.origin}/c/${conversationId}`;
   const payload = await response.json();
   const mapping = payload?.mapping || {};
   const nodes = Object.values(mapping)
@@ -105,67 +168,19 @@ async () => {
         role,
         markdown: parts.join("\n\n").trim(),
       };
-    });
+    })
+    .filter((message) => message.markdown.length > 0);
 
   return {
-    ok: true,
+    ok: nodes.length > 0,
+    error: nodes.length > 0 ? null : "Private conversation fetch returned no visible user or assistant messages.",
     payload: {
       title: document.title.replace(/\s*\|\s*ChatGPT\s*$/i, "").trim() || "untitled-chat",
-      source_url: location.href,
+      source_url: canonicalUrl,
       conversation_id: conversationId,
       exported_at: new Date().toISOString(),
       mode: "full",
       messages: nodes,
-    },
-  };
-}
-```
-
-## Fallback extraction path: DOM
-
-Use this only when the in-page fetch path fails. It is weaker, but still normalizes the current visible thread into renderer input.
-
-```js
-() => {
-  const conversationId = (location.pathname.match(/\/c\/([^/?#]+)/) || [null, null])[1];
-  const articleNodes = Array.from(document.querySelectorAll("article"));
-
-  const messages = articleNodes
-    .map((node) => {
-      const roleLabel =
-        node.querySelector("[data-message-author-role]")?.getAttribute("data-message-author-role") ||
-        (node.innerText.includes("You said:") ? "user" : node.innerText.includes("ChatGPT said:") ? "assistant" : null);
-
-      if (roleLabel !== "user" && roleLabel !== "assistant") {
-        return null;
-      }
-
-      const codeBlocks = Array.from(node.querySelectorAll("pre code")).map((code) => {
-        const language =
-          Array.from(code.classList).find((value) => value.startsWith("language-"))?.replace("language-", "") || "";
-        return {
-          type: "code_block",
-          language,
-          text: code.textContent || "",
-        };
-      });
-
-      const textContent = (node.innerText || "").trim();
-      return codeBlocks.length > 0
-        ? { role: roleLabel, parts: [{ type: "paragraph", text: textContent }, ...codeBlocks] }
-        : { role: roleLabel, markdown: textContent };
-    })
-    .filter(Boolean);
-
-  return {
-    ok: true,
-    payload: {
-      title: document.title.replace(/\s*\|\s*ChatGPT\s*$/i, "").trim() || "untitled-chat",
-      source_url: location.href,
-      conversation_id: conversationId || "unknown-conversation",
-      exported_at: new Date().toISOString(),
-      mode: "full",
-      messages,
     },
   };
 }

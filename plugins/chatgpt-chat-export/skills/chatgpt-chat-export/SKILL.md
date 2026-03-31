@@ -24,10 +24,11 @@ description: Export ChatGPT web chats through Chrome DevTools MCP into repo-trac
    - If `chatgpt.com` is not logged in or the page cannot show recent chats/current thread content, stop with an actionable error.
 3. Prefer the primary extraction path.
    - Read `references/browser-workflow.md`.
-   - Use the in-page fetch snippet there to normalize the current conversation into the renderer payload shape.
+   - Use the current-DOM snippet there, which targets the visible thread via `[data-message-author-role]`.
 4. Fall back only when needed.
-   - If the in-page fetch path fails, use the DOM fallback snippet from `references/browser-workflow.md`.
+   - If the DOM path cannot preserve enough structure, try the private in-page fetch snippet from `references/browser-workflow.md`.
    - Keep that fallback scoped to the current page and current visible thread only.
+   - If both paths fail or return zero messages, stop and report the failure; do not write a partial export.
 5. Render deterministic markdown.
    - Pipe the normalized JSON payload to:
      - `python3 shared/workflow-core/plugins/chatgpt-chat-export/scripts/render_chatgpt_export.py --input - --output-dir chats`
@@ -57,6 +58,7 @@ description: Export ChatGPT web chats through Chrome DevTools MCP into repo-trac
 - If the title is ambiguous, return the matching titles and URLs and stop.
 - If extraction returns incomplete or malformed data, do not write a partial markdown file.
 - If login state is missing, tell the user to open a logged-in `chatgpt.com` tab and retry.
+- Prefer canonical conversation URLs of the form `https://chatgpt.com/c/<conversation_id>` in saved exports.
 
 ## Read next
 - `references/browser-workflow.md` for the browser-side snippets and normalized payload schema.
