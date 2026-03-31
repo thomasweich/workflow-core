@@ -20,6 +20,7 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
   - worktree workflow and command contract
   - approved-plan execution and atomic-commit defaults
   - planning/testing/documentation process guardrails
+  - shared Codex plugins, skills, and reusable plugin-side documentation under `plugins/`
   - formal-plan lifecycle: active plans live in `plans/`, completed/canceled/superseded plans move to `plans/archive/` in the same task
   - AGENTS-evolution workflow for promoting policy changes
 - Local in consumer repo:
@@ -85,6 +86,35 @@ Keep local supplements only for repository-specific:
 - command catalogs
 - rollout or migration runbooks
 - AGENTS candidate history or local governance logs
+
+## Shared Plugins
+Consumer repos may expose shared workflow-core plugins through their own local marketplace metadata.
+
+Shared ownership:
+- Plugin code lives under `shared/workflow-core/plugins/<plugin-name>/`.
+- Consumer repos still own `.agents/plugins/marketplace.json`, because installation policy and local availability are consumer concerns.
+
+Consumer marketplace pattern:
+
+```json
+{
+  "name": "chatgpt-chat-export",
+  "source": {
+    "source": "local",
+    "path": "./shared/workflow-core/plugins/chatgpt-chat-export"
+  },
+  "policy": {
+    "installation": "AVAILABLE",
+    "authentication": "ON_INSTALL"
+  },
+  "category": "Productivity"
+}
+```
+
+Use:
+- `docs/shared-plugins.md`
+
+to see the shared plugin consumption rules and the `chatgpt-chat-export` example.
 
 ## Prompt-Based Semantic Review
 When structural validation is not enough, run:

@@ -8,6 +8,7 @@ read_when:
 code_paths:
   - AGENTS.local.template.md
   - docs/workflow-core-usage.md
+  - docs/shared-plugins.md
   - scripts/workflow/render-agents
   - scripts/workflow/validate-guardrails
   - scripts/workflow/review-guardrails
@@ -34,6 +35,9 @@ Provide one repeatable setup for both greenfield consumer repositories and migra
 - `scripts/workflow/verify-integration`
 - `scripts/verify`
 - `.github/workflows/workflow-guardrails.yml`
+
+If a consumer repo exposes shared Codex plugins, also expect:
+- `.agents/plugins/marketplace.json`
 
 ## Wrapper Script Template
 Use the same thin-wrapper pattern for all workflow-core consumer commands:
@@ -128,6 +132,14 @@ jobs:
 
 If the repository needs language/runtime setup for its own `scripts/verify`, add that separately.
 
+## Shared Plugin Consumption
+If a consumer repo wants to expose a workflow-core-owned plugin, keep the ownership boundary explicit:
+- plugin code and plugin-side docs live in `shared/workflow-core/plugins/<plugin-name>/`
+- consumer repos keep local marketplace metadata in `.agents/plugins/marketplace.json`
+- consumer repos may keep local docs for repo-specific output/storage policy
+
+Use `docs/shared-plugins.md` for the concrete marketplace entry pattern and the current shared plugin examples.
+
 ## New Repository Bootstrap Checklist
 1. Add `workflow-core` as a pinned dependency at `shared/workflow-core/`.
    - Recommended: `git submodule add <workflow-core-url> shared/workflow-core`
@@ -156,13 +168,14 @@ If the repository needs language/runtime setup for its own `scripts/verify`, add
    - active formal plans live in `plans/`
    - completed/canceled/superseded formal plans live in `plans/archive/`
    - do not leave completed formal plans in `plans/`
-12. Add CI that runs `scripts/workflow/verify-integration`.
-13. Run:
+12. If the repo exposes shared plugins, point `.agents/plugins/marketplace.json` at `./shared/workflow-core/plugins/<plugin-name>`.
+13. Add CI that runs `scripts/workflow/verify-integration`.
+14. Run:
    - `scripts/workflow/verify-integration`
    - `scripts/verify`
    - optional `scripts/workflow/review-guardrails --fail-on never`
    - add `--timeout-seconds <n>` if the prompt review needs a longer budget in your environment
-14. Review and commit:
+15. Review and commit:
    - pinned `workflow-core` revision
    - local overlay
    - generated `AGENTS.md`
@@ -195,15 +208,16 @@ If the repository needs language/runtime setup for its own `scripts/verify`, add
    - active formal plans stay in `plans/`
    - completed/canceled/superseded formal plans move to `plans/archive/`
    - archive any stale completed plan still sitting in `plans/`
-10. Run semantic conflict and placement review:
+10. If the repo exposes shared plugins, repoint `.agents/plugins/marketplace.json` to `./shared/workflow-core/plugins/<plugin-name>` and remove any copied local plugin implementation.
+11. Run semantic conflict and placement review:
    - `scripts/workflow/review-guardrails --fail-on never`
-11. Review the migration diff for dropped instructions.
+12. Review the migration diff for dropped instructions.
    - Every removed rule should now live in shared-core, `AGENTS.local.md`, a local supplement, or be intentionally deleted.
-12. Run:
+13. Run:
     - `scripts/workflow/verify-integration`
     - `scripts/verify`
     - optional `scripts/workflow/review-guardrails --fail-on never --timeout-seconds <n>`
-13. Document the migration in the PR:
+14. Document the migration in the PR:
     - pinned `workflow-core` revision
     - which local files became thin wrappers
     - which instructions moved into shared-core

@@ -1,0 +1,36 @@
+{
+  "name": "chatgpt-chat-export",
+  "version": "0.1.0",
+  "description": "Shared workflow-core skill and scripts for exporting ChatGPT chats through Chrome DevTools MCP.",
+  "author": {
+    "name": "Thomas Weich",
+    "url": "https://github.com/thomasweich"
+  },
+  "homepage": "https://github.com/thomasweich/workflow-core/tree/main/plugins/chatgpt-chat-export",
+  "repository": "https://github.com/thomasweich/workflow-core",
+  "license": "UNLICENSED",
+  "keywords": [
+    "chatgpt",
+    "chrome-devtools",
+    "markdown-export"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "ChatGPT Chat Export",
+    "shortDescription": "Export recent ChatGPT chats into repo-tracked markdown.",
+    "longDescription": "Uses Chrome DevTools MCP plus deterministic local rendering to save recent ChatGPT conversations and last answers into chats/.",
+    "developerName": "Thomas Weich",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/thomasweich/workflow-core/tree/main/plugins/chatgpt-chat-export",
+    "defaultPrompt": [
+      "List my 10 most recent ChatGPT chats.",
+      "Export this ChatGPT conversation to chats/.",
+      "Export only the last assistant answer."
+    ],
+    "brandColor": "#0F766E"
+  }
+}
