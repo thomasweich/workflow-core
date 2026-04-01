@@ -24,9 +24,14 @@ description: Export ChatGPT web chats through Chrome DevTools MCP into repo-trac
    - If `chatgpt.com` is not logged in or the page cannot show recent chats/current thread content, stop with an actionable error.
 3. Prefer the primary extraction path.
    - Read `references/browser-workflow.md`.
-   - Use the current-DOM snippet there, which targets the visible thread via `[data-message-author-role]`.
+   - Use the page-exposed copy actions there with Chrome DevTools MCP:
+     - `Copy message` for user turns
+     - `Copy response` for assistant turns
+   - After each MCP click, read the host clipboard from the shell and build the normalized payload from the copied markdown/text blocks.
+   - For last-answer-only exports, prefer the latest visible `Copy response` button and render that clipboard payload directly.
 4. Fall back only when needed.
-   - If the DOM path cannot preserve enough structure, try the private in-page fetch snippet from `references/browser-workflow.md`.
+   - If the copy-button path is unavailable or clipboard reads cannot be completed, use the current-DOM fallback from `references/browser-workflow.md`.
+   - If the DOM fallback still cannot preserve enough structure, try the private in-page fetch snippet from `references/browser-workflow.md`.
    - Keep that fallback scoped to the current page and current visible thread only.
    - If both paths fail or return zero messages, stop and report the failure; do not write a partial export.
 5. Render deterministic markdown.
@@ -57,6 +62,7 @@ description: Export ChatGPT web chats through Chrome DevTools MCP into repo-trac
 - Title resolution must be exact against recent visible entries.
 - If the title is ambiguous, return the matching titles and URLs and stop.
 - If extraction returns incomplete or malformed data, do not write a partial markdown file.
+- If the copy action updates the page clipboard but the host clipboard cannot be read, stop and report that clipboard access is blocked in the current environment.
 - If login state is missing, tell the user to open a logged-in `chatgpt.com` tab and retry.
 - Prefer canonical conversation URLs of the form `https://chatgpt.com/c/<conversation_id>` in saved exports.
 

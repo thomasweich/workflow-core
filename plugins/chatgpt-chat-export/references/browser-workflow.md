@@ -62,7 +62,55 @@ Use this in the current logged-in `chatgpt.com` page context to list recent visi
 }
 ```
 
-## Primary extraction path: current visible DOM
+## Conversation metadata snippet
+
+Use this once on the current conversation page to build the base payload fields before you
+fill in `messages` from copied clipboard content.
+
+```js
+() => {
+  const conversationId = (location.pathname.match(/\/c\/([^/?#]+)/) || [null, null])[1];
+  const canonicalUrl = conversationId ? `${location.origin}/c/${conversationId}` : location.href;
+
+  return {
+    title: document.title.replace(/\s*\|\s*ChatGPT\s*$/i, "").trim() || "untitled-chat",
+    source_url: canonicalUrl,
+    conversation_id: conversationId || "unknown-conversation",
+    exported_at: new Date().toISOString(),
+    mode: "full",
+  };
+}
+```
+
+## Primary extraction path: page copy actions plus host clipboard
+
+Use this on the current conversation page. The stable path is to click the page-exposed copy
+controls through Chrome DevTools MCP and read the host clipboard from the shell immediately
+after each click.
+
+Observed page controls:
+- user turns expose `Copy message`
+- assistant turns expose `Copy response`
+
+Recommended workflow:
+1. Use `take_snapshot` to identify the visible message sequence and the matching copy buttons in order.
+2. For each visible message, click its page-exposed copy button:
+   - user turn: `Copy message`
+   - assistant turn: `Copy response`
+3. Read the host clipboard right after each click with a shell command available on the host:
+   - macOS: `pbpaste`
+   - Wayland: `wl-paste --no-newline`
+   - X11: `xclip -selection clipboard -o`
+4. Trim trailing whitespace and append the copied block as:
+   - `{ "role": "user", "markdown": "<clipboard text>" }`
+   - `{ "role": "assistant", "markdown": "<clipboard text>" }`
+5. Combine those copied blocks with the metadata snippet above into the normalized payload.
+
+Notes:
+- Prefer this route for both full-thread exports and last-answer-only exports because it preserves the rendered markdown the page already exposes.
+- Do not use `navigator.clipboard.readText()` as the primary read path. In practice, the page often leaves clipboard read permission in `prompt`, which can stall the extraction flow even when the copy button succeeds.
+
+## Fallback path: current visible DOM
 
 Use this on the current conversation page. It targets the current ChatGPT thread DOM shape,
 which exposes each message root with `data-message-author-role`.

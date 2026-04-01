@@ -53,3 +53,22 @@ def test_renderer_namespaces_footnotes_per_message() -> None:
     assert "[^m0001-1]" in markdown
     assert "[^m0002-1]" in markdown
     assert "[^1]:" not in markdown
+
+
+def test_renderer_preserves_copied_markdown_blocks() -> None:
+    copied_markdown = "# Heading\n\n* one\n* two\n\n```python\nprint('copied')\n```"
+    payload = normalize_export_payload(
+        {
+            "title": "Copied markdown",
+            "source_url": "https://chatgpt.com/c/copied",
+            "conversation_id": "copied",
+            "mode": "full",
+            "messages": [
+                {"role": "assistant", "markdown": copied_markdown},
+            ],
+        }
+    )
+
+    markdown = render_export_markdown(payload)
+
+    assert copied_markdown in markdown
