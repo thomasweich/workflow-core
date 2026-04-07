@@ -56,6 +56,8 @@ This file defines repository-independent baseline rules for agent-driven enginee
 ## 5) Documentation Standard
 - Behavior/API/workflow/architecture changes require doc updates in the same task.
 - Pure refactors/test-only/cosmetic-only changes can skip docs unless they alter operational behavior.
+- If a consumer repository defines a canonical worktree context/status file, keep that file updated in the same task whenever worktree scope, active plans, or remaining high-level todos change.
+- Follow the consumer repository's documented contract for that file; if no contract exists yet, document it before relying on the file as workflow state.
 - Keep process docs concise and enforceable; move detailed rationale into playbooks.
 
 ## 6) Code Size Standard
