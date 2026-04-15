@@ -54,6 +54,9 @@ Consumer repositories may define additional additive sections when needed.
   - unchecked: `[ ]`
   - checked: `[x]` or `[X]`
 - The text after the checkbox is the durable high-level todo label.
+- Open todos should describe the current remaining slices of work in this worktree, not broad multi-phase initiatives.
+- Broad goals such as a full redesign, re-architecture, or migration theme belong in plan documents; `worktree.md` should keep only the next unfinished slices that remain after each milestone lands.
+- After a milestone commit, reconcile `worktree.md` so completed umbrella items are removed or replaced with the next still-open slice.
 - Non-task-list lines under `# Todos` are allowed, but consumers should not rely on them as structured workflow state unless they document stricter local rules.
 
 ### Example
@@ -103,6 +106,8 @@ We enforce this standard in layers:
    - before final verification/push/handoff, `worktree.md` should exist and reflect current high-level todos plus active plan references.
 6. Repository-local validation:
    - until a shared schema validator exists, consumer repositories should add any stricter checks they need in their own verification flow.
+7. Shared warning signal:
+   - shared `verify-integration` may emit warnings for obviously broad umbrella todos so stale top-level work is noticed earlier without relying on brittle hard-fail heuristics.
 
 ## Adoption Guidance
 - New consumer repositories should adopt this standard directly.

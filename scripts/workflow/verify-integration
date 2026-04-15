@@ -64,6 +64,7 @@ validate_wrapper="$repo_root/scripts/workflow/validate-guardrails"
 review_wrapper="$repo_root/scripts/workflow/review-guardrails"
 verify_wrapper="$repo_root/scripts/workflow/verify-integration"
 worktree_script="$repo_root/scripts/worktree"
+worktree_md_checker="$shared_root/scripts/workflow/check-worktree-md"
 
 for wrapper in "$render_wrapper" "$validate_wrapper" "$review_wrapper" "$verify_wrapper"; do
   [[ -f "$wrapper" ]] || fail "Expected local wrapper not found: $wrapper"
@@ -89,8 +90,12 @@ done
 
 printf '[%s] workflow-core Python syntax checks...\n' "$SCRIPT_NAME"
 python3 -m py_compile "$shared_root/scripts/workflow/render-agents"
+python3 -m py_compile "$shared_root/scripts/workflow/check-worktree-md"
 python3 -m py_compile "$shared_root/scripts/workflow/validate-guardrails"
 python3 -m py_compile "$shared_root/scripts/workflow/review-guardrails"
+
+printf '[%s] worktree.md warning checks...\n' "$SCRIPT_NAME"
+"$worktree_md_checker" --repo-root "$repo_root"
 
 printf '[%s] workflow-core tooling tests...\n' "$SCRIPT_NAME"
 if [[ "${WORKFLOW_GUARDRAILS_SKIP_CORE_TESTS:-0}" == "1" ]]; then

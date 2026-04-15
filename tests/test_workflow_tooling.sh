@@ -178,6 +178,7 @@ install_shared_tooling() {
     "$repo_root/shared/workflow-core/playbooks/planning" \
     "$repo_root/shared/workflow-core/playbooks/testing"
   cp "$CORE_ROOT/scripts/workflow/render-agents" "$repo_root/shared/workflow-core/scripts/workflow/render-agents"
+  cp "$CORE_ROOT/scripts/workflow/check-worktree-md" "$repo_root/shared/workflow-core/scripts/workflow/check-worktree-md"
   cp "$CORE_ROOT/scripts/workflow/validate-guardrails" "$repo_root/shared/workflow-core/scripts/workflow/validate-guardrails"
   cp "$CORE_ROOT/scripts/workflow/review-guardrails" "$repo_root/shared/workflow-core/scripts/workflow/review-guardrails"
   cp "$CORE_ROOT/scripts/workflow/verify-integration" "$repo_root/shared/workflow-core/scripts/workflow/verify-integration"
@@ -194,6 +195,7 @@ install_shared_tooling() {
   cp "$CORE_ROOT/tests/test_workflow_tooling.sh" "$repo_root/shared/workflow-core/tests/test_workflow_tooling.sh"
   chmod +x \
     "$repo_root/shared/workflow-core/scripts/workflow/render-agents" \
+    "$repo_root/shared/workflow-core/scripts/workflow/check-worktree-md" \
     "$repo_root/shared/workflow-core/scripts/workflow/validate-guardrails" \
     "$repo_root/shared/workflow-core/scripts/workflow/review-guardrails" \
     "$repo_root/shared/workflow-core/scripts/workflow/verify-integration" \
@@ -470,6 +472,21 @@ EOF
 "$repo_verify/shared/workflow-core/scripts/workflow/render-agents" --repo-root "$repo_verify" >/dev/null
 WORKFLOW_GUARDRAILS_SKIP_CORE_TESTS=1 \
   "$VERIFY_INTEGRATION_SCRIPT" --repo-root "$repo_verify" --shared-root "$repo_verify/shared/workflow-core" >/dev/null
+
+printf '[workflow-core tests] shared verify-integration warns on broad worktree umbrella todos...\n'
+cat <<'EOF' >"$repo_verify/worktree.md"
+# Todos
+
+- [ ] Re-architect the WFO UI around aggregate view-model payloads and SSE-driven updates.
+
+# Active Plans
+
+- plans/active-plan.md
+EOF
+WORKFLOW_GUARDRAILS_SKIP_CORE_TESTS=1 \
+  "$VERIFY_INTEGRATION_SCRIPT" --repo-root "$repo_verify" --shared-root "$repo_verify/shared/workflow-core" >"$tmp_dir/verify-worktree-warning.log"
+assert_contains "$tmp_dir/verify-worktree-warning.log" '[check-worktree-md] WARNING:'
+assert_contains "$tmp_dir/verify-worktree-warning.log" 'broad umbrella initiative'
 
 printf '[workflow-core tests] shared verify-integration requires local scripts/worktree...\n'
 repo_verify_missing_worktree="$tmp_dir/repo-verify-missing-worktree"

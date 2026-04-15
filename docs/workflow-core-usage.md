@@ -70,6 +70,7 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
 The shared standard is enforced in layers:
 - Shared policy: generated `AGENTS.md` propagates the `worktree.md` requirement into every consumer repo.
 - Shared worktree workflow: `playbooks/git/worktree-workflow.md` requires `worktree.md` maintenance as part of normal task execution.
+- Shared verification warning: `scripts/workflow/verify-integration` can warn on obviously broad open umbrella todos so stale branch-level work is noticed earlier.
 - Consumer bootstrap: each repo should create or backfill `worktree.md` during worktree creation/onboarding.
 - Consumer verification: repos should add any stricter schema/content checks they need to `scripts/verify`.
 - Product/tooling adoption: local UIs and agents should read/write `worktree.md` instead of inventing parallel canonical context files.

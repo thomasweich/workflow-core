@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import re
+import sys
+from pathlib import Path
+
+SCRIPT_NAME = "check-worktree-md"
+TODO_HEADING_RE = re.compile(r"^#\s+(Todo|Todos)\s*$", re.IGNORECASE)
+HEADING_RE = re.compile(r"^#\s+")
+OPEN_TODO_RE = re.compile(r"^\s*[-*+]\s+\[\s\]\s+(?P<text>.+?)\s*$")
+UMBRELLA_TODO_RE = re.compile(
+    r"^(re-architect|redesign|rework|overhaul|refactor|simplify|improve|optimize|harden|migrate|modernize)\b",
+    re.IGNORECASE,
+)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog=SCRIPT_NAME,
+        description="Emit warnings for obviously broad open worktree.md todos.",
+    )
+    parser.add_argument("--repo-root", required=True, help="Consumer repository root to inspect.")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    repo_root = Path(args.repo_root).resolve()
+    worktree_md = repo_root / "worktree.md"
+    if not worktree_md.is_file():
+        return 0
+
+    warnings = find_broad_todo_warnings(worktree_md)
+    for warning in warnings:
+        print(f"[{SCRIPT_NAME}] WARNING: {warning}")
+    return 0
+
+
+def find_broad_todo_warnings(worktree_md: Path) -> list[str]:
+    current_heading: str | None = None
+    warnings: list[str] = []
+
+    for line_number, raw_line in enumerate(worktree_md.read_text(encoding="utf-8").splitlines(), start=1):
+        line = raw_line.rstrip()
+        if TODO_HEADING_RE.match(line):
+            current_heading = "todos"
+            continue
+        if HEADING_RE.match(line):
+            current_heading = None
+            continue
+        if current_heading != "todos":
+            continue
+
+        match = OPEN_TODO_RE.match(line)
+        if not match:
+            continue
+        todo_text = match.group("text").strip()
+        if not UMBRELLA_TODO_RE.match(todo_text):
+            continue
+        warnings.append(
+            f"{worktree_md}:line {line_number}: open todo looks like a broad umbrella initiative: "
+            f"'{todo_text}'. Replace it with the current remaining slice and keep the broader objective in the active plan."
+        )
+
+    return warnings
+
+
+if __name__ == "__main__":
+    sys.exit(main())

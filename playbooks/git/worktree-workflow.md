@@ -97,6 +97,8 @@ code_paths:
 - Keep it current as part of normal task execution rather than leaving it for end-of-task cleanup.
 - Update active plan references when the implementation plan or product-plan basis changes.
 - Update the high-level todo list as work is completed or new work becomes the next obvious step.
+- Keep open todos slice-sized. Broad initiatives or themes belong in plan docs; `worktree.md` should state the current remaining slices, not the whole program of work.
+- After each milestone commit, reconcile `worktree.md` so any completed umbrella todo is removed or replaced with the next unfinished slice.
 - Ensure the file still matches the shared `docs/worktree-md-standard.md` baseline before final verification and handoff.
 - Consumer repositories may define additive sections or stricter checks, but should not silently change the meaning of `# Todos` or `# Active Plans`.
 - Additional repo-local files may supplement `worktree.md`, but should not replace it as the canonical shared workflow context file.
