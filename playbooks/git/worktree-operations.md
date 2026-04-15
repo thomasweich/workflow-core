@@ -31,7 +31,7 @@ code_paths:
 - Behavior:
   - If branch worktree already exists, it is reused.
   - If branch exists locally, it is attached to sibling-of-main-root worktree path automatically.
-  - By default, attempts to open a terminal session and runs:
+  - By default, attempts to open a Ghostty session and runs:
     - `codex --dangerously-bypass-approvals-and-sandbox`
 - Slug guidance: lowercase kebab-case, 2-5 words, action-oriented.
 - Normalization: script lowercases input and converts invalid characters/spaces to `-`.
@@ -42,7 +42,7 @@ code_paths:
   - `--reuse` allow pre-existing target path usage
   - `--no-fetch` skip fetch
   - `--allow-dirty` bypass clean-check
-  - `--no-codex` skip terminal/Codex auto-launch
+  - `--no-codex` skip Ghostty/Codex auto-launch
   - `--codex-cmd <cmd>` override Codex launch command
 - If `--no-codex` is used, immediately print the exact manual command:
   - `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox`

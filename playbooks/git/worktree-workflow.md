@@ -18,7 +18,7 @@ code_paths:
 - Base ref: `origin/main`
 - Branch pattern: `agent/<task-slug>`
 - Worktree path pattern: sibling of main worktree root (`<main-worktree-parent>/<branch-name>`)
-- Launch behavior for `create`: attempt to open a terminal session and run `codex --dangerously-bypass-approvals-and-sandbox`
+- Launch behavior for `create`: attempt to open a Ghostty session and run `codex --dangerously-bypass-approvals-and-sandbox`
 
 ## Required Local Config Input
 - `WORKTREE_MAIN_ROOT`: absolute path to the consumer repository's main worktree root.
@@ -36,7 +36,7 @@ code_paths:
 ## Primary Commands
 1. Create task worktree:
    - `scripts/worktree create <task-slug>`
-   - Add `--no-codex` to skip terminal/Codex auto-launch.
+   - Add `--no-codex` to skip Ghostty/Codex auto-launch.
    - If `--no-codex` is used, immediately print the exact manual command:
      - `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox`
    - If auto-launch is unavailable, print the same manual command instead of failing.
