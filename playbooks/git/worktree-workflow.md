@@ -92,15 +92,15 @@ code_paths:
   - If the branch exists locally but is not checked out in a worktree path, create the sibling-of-main-root worktree directly from that branch.
 - `--reuse` is only needed when intentionally using a pre-existing target directory path.
 
-## Worktree Context File Discipline
-- Some consumer repositories define a canonical worktree context/status file in each worktree.
-- When such a file contract exists:
-  - keep it current as part of normal task execution rather than leaving it for end-of-task cleanup;
-  - update active plan references when the implementation plan or product-plan basis changes;
-  - update the high-level todo list as work is completed or new work becomes the next obvious step;
-  - ensure the file still matches the repository's documented schema/heading contract before final verification and handoff.
-- Do not invent or silently change the file structure ad hoc.
-- If the repository depends on such a file but does not yet define the contract clearly, document the contract in the same task before treating the file as canonical workflow state.
+## `worktree.md` Discipline
+- `worktree.md` in the worktree root is the shared standard canonical worktree context/status file.
+- Keep it current as part of normal task execution rather than leaving it for end-of-task cleanup.
+- Update active plan references when the implementation plan or product-plan basis changes.
+- Update the high-level todo list as work is completed or new work becomes the next obvious step.
+- Ensure the file still matches the shared `docs/worktree-md-standard.md` baseline before final verification and handoff.
+- Consumer repositories may define additive sections or stricter checks, but should not silently change the meaning of `# Todos` or `# Active Plans`.
+- Additional repo-local files may supplement `worktree.md`, but should not replace it as the canonical shared workflow context file.
+- If `worktree.md` is missing in a repository that depends on worktree-local context, bootstrap it in the same task instead of leaving the worktree without the standard file.
 
 ## Rebase Conflicts
 When rebase stops on conflicts, use `playbooks/git/rebase-guide.md`.

@@ -18,6 +18,7 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
 - Shared in `workflow-core`:
   - non-negotiables
   - worktree workflow and command contract
+  - shared `worktree.md` standard for worktree-local context
   - approved-plan execution and atomic-commit defaults
   - planning/testing/documentation process guardrails
   - shared Codex plugins, skills, and reusable plugin-side documentation under `plugins/`
@@ -37,10 +38,15 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
 3. Set required local config values:
    - `WORKTREE_MAIN_ROOT=<absolute-path-to-main-worktree-root>`
    - Derive task-worktree parent as `dirname(WORKTREE_MAIN_ROOT)`.
-4. Add or adapt `scripts/worktree` in the consumer repo so it satisfies the shared command contract.
+4. Adopt the shared `worktree.md` standard in consumer worktrees.
+   - Use `worktree.md` at the worktree root as the canonical shared context file.
+   - At minimum, support `# Todos` and `# Active Plans` per `docs/worktree-md-standard.md`.
+   - If the repository already has another worktree-local context file, keep it supplemental rather than canonical.
+5. Add or adapt `scripts/worktree` in the consumer repo so it satisfies the shared command contract.
    - `scripts/worktree --help` should succeed and advertise `create`, `rebase`, `push`, `cleanup`, and `list`.
    - `scripts/worktree list` should be safe and non-mutating.
-5. Create effective policy entrypoint:
+   - Ensure worktree creation or onboarding bootstraps `worktree.md` when it is missing.
+6. Create effective policy entrypoint:
    - `AGENTS.md` in consumer root, assembled from shared core + local overlay.
    - The generated file should contain a composed snapshot of the shared core policy plus the local overlay, not just pointers.
    - Add wrapper commands:
@@ -49,15 +55,24 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
      - `scripts/workflow/review-guardrails`
      - `scripts/workflow/verify-integration`
    - Commit the rendered `AGENTS.md`.
-6. Add validation checks in CI:
+7. Add validation checks in CI:
    - core version pin is explicit
    - effective policy file is up to date
    - local overlay does not weaken core non-negotiables
    - local `scripts/worktree` satisfies the shared contract
+   - repository verification should fail when the repo’s own stricter `worktree.md` checks fail
    - Run the shared-owned integration suite:
      - `scripts/workflow/verify-integration`
    - Optional full repo verification around it:
      - `scripts/verify`
+
+## `worktree.md` Enforcement
+The shared standard is enforced in layers:
+- Shared policy: generated `AGENTS.md` propagates the `worktree.md` requirement into every consumer repo.
+- Shared worktree workflow: `playbooks/git/worktree-workflow.md` requires `worktree.md` maintenance as part of normal task execution.
+- Consumer bootstrap: each repo should create or backfill `worktree.md` during worktree creation/onboarding.
+- Consumer verification: repos should add any stricter schema/content checks they need to `scripts/verify`.
+- Product/tooling adoption: local UIs and agents should read/write `worktree.md` instead of inventing parallel canonical context files.
 
 ## Local Overlay Guidance
 - Keep local overlay scoped to repository specifics:

@@ -56,8 +56,9 @@ This file defines repository-independent baseline rules for agent-driven enginee
 ## 5) Documentation Standard
 - Behavior/API/workflow/architecture changes require doc updates in the same task.
 - Pure refactors/test-only/cosmetic-only changes can skip docs unless they alter operational behavior.
-- If a consumer repository defines a canonical worktree context/status file, keep that file updated in the same task whenever worktree scope, active plans, or remaining high-level todos change.
-- Follow the consumer repository's documented contract for that file; if no contract exists yet, document it before relying on the file as workflow state.
+- `worktree.md` at the worktree root is the shared standard canonical worktree context/status file across consumer repositories.
+- Keep `worktree.md` updated in the same task whenever worktree scope, active plans, or remaining high-level todos change.
+- Follow the shared `worktree.md` standard in `docs/worktree-md-standard.md`; consumer repositories may add stricter additive sections, but must not silently redefine the meaning of `# Todos` or `# Active Plans`.
 - Keep process docs concise and enforceable; move detailed rationale into playbooks.
 
 ## 6) Code Size Standard
