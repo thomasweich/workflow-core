@@ -63,7 +63,7 @@ code_paths:
 - Purpose: verify branch is up-to-date with base, run checks, then push to `<remote>/<branch>`.
 - Upstream behavior: if tracking does not match `<remote>/<branch>`, `push` resets upstream to the matching remote branch during push.
 - Useful flags:
-  - `--verify-cmd <cmd>` (recommended: repository full pre-push verify command)
+  - `--verify-cmd <cmd>` (recommended: configured repository verify command)
   - `--no-verify`
   - `--allow-main` (only with explicit user request)
   - `--allow-dirty`

@@ -109,8 +109,9 @@ Append repo-specific checks after the workflow-core integration block.
 
 If a repository splits verification into fast and full modes, make the mode boundary explicit:
 - the fast/default command should be suitable for inner-loop feedback during implementation
-- the full command must be the repository's pre-push gate and include workflow-core integration plus repo-specific build/test/doc checks
-- local overlays and `scripts/worktree push --verify-cmd "<repo-verify-cmd>"` must reference the full command, for example `scripts/verify --full`
+- the configured repository verify command is the normal pre-push gate
+- the full command is available for explicit/manual use and should include workflow-core integration plus repo-specific build/test/doc checks
+- local overlays and `scripts/worktree push --verify-cmd "<repo-verify-cmd>"` must reference the configured push gate, for example `scripts/verify` or a stricter repo-chosen command
 
 ## Minimal CI Workflow
 If the consumer repo does not already have guardrail CI, start with:

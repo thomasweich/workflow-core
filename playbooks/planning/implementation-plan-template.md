@@ -45,7 +45,8 @@ code_paths: []
 
 ## Verification
 - Targeted checks:
-- Full suite: `<repo-verify-cmd>`
+- Repository verify command: `<repo-verify-cmd>`
+- Manual full suite (if separate): `<repo-full-verify-cmd>`
 - Integration checks (if parallel approved):
 - Post-migration checks:
 

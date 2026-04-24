@@ -40,7 +40,8 @@ code_paths: []
 
 ## Testing Plan
 - Targeted checks:
-- Full suite before push: `<repo-verify-cmd>`
+- Repository verify command: `<repo-verify-cmd>`
+- Manual full suite (if separate): `<repo-full-verify-cmd>`
 - Pass criteria:
 
 ## Documentation Impact

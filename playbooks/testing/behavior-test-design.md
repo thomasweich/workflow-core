@@ -86,7 +86,7 @@ Before final verification:
 ## Consumer-Repo Supplements
 - Keep repository-specific command catalogs in local docs such as `docs/quality/testing.md`.
 - If a repo needs extra local testing playbooks, add them locally and reference this shared baseline.
-- Full-suite verification should use the consumer repository's full pre-push verify command. In repos with split modes, this may be a flag such as `scripts/verify --full`; plain `scripts/verify` may be reserved for fast inner-loop feedback.
+- Push verification should use the consumer repository's configured verify command. In repos with split modes, a full-suite command such as `scripts/verify --full` should remain manual unless repo-local policy explicitly makes it the push gate.
 - `scripts/workflow/verify-integration` only checks workflow-core integration and guardrails. Include it in repo verification, but do not treat it as product/build/test coverage.
 
 ## Dev-Server Policy Note

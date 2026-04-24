@@ -68,7 +68,7 @@ Required in every formal plan:
 - executable checklist
 - execution mode and approval status
 - explicit test commands and pass criteria
-- full-suite repo verification command unless a stricter superset is required
+- repo verify command and any separate manual full-suite command when applicable
 - docs impact checklist
 - progress log with timestamps
 
