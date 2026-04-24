@@ -31,8 +31,9 @@ code_paths:
 - Behavior:
   - If branch worktree already exists, it is reused.
   - If branch exists locally, it is attached to sibling-of-main-root worktree path automatically.
-  - By default, attempts to open a Ghostty session and runs:
-    - `codex --dangerously-bypass-approvals-and-sandbox`
+  - By default, does not open a separate terminal.
+  - If the consumer script supports auto-launch, it must be opt-in and use an explicit flag such as:
+    - `--open-codex`
 - Slug guidance: lowercase kebab-case, 2-5 words, action-oriented.
 - Normalization: script lowercases input and converts invalid characters/spaces to `-`.
 - Useful flags:
@@ -42,11 +43,11 @@ code_paths:
   - `--reuse` allow pre-existing target path usage
   - `--no-fetch` skip fetch
   - `--allow-dirty` bypass clean-check
-  - `--no-codex` skip Ghostty/Codex auto-launch
+  - `--open-codex` explicitly launch Codex when the consumer script supports it
+  - `--no-codex` explicitly skip Codex auto-launch
   - `--codex-cmd <cmd>` override Codex launch command
-- If `--no-codex` is used, immediately print the exact manual command:
+- If auto-launch is skipped or unavailable, print the exact manual command:
   - `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox`
-- If auto-launch is unavailable, print the same manual command instead of failing.
 
 ## rebase
 - Command: `scripts/worktree rebase --branch <branch-name>`
@@ -61,9 +62,12 @@ code_paths:
 ## push
 - Command: `scripts/worktree push --branch <branch-name> --verify-cmd "<repo-verify-cmd>"`
 - Purpose: verify branch is up-to-date with base, run checks, then push to `<remote>/<branch>`.
+- Direct-main command: `scripts/worktree push --branch <branch-name> --to-main --verify-cmd "<repo-verify-cmd>"`
+- Direct-main purpose: after explicit user approval, verify the task branch is a fast-forward over `<remote>/<base>` and push `HEAD:<base>`.
 - Upstream behavior: if tracking does not match `<remote>/<branch>`, `push` resets upstream to the matching remote branch during push.
 - Useful flags:
   - `--verify-cmd <cmd>` (recommended: configured repository verify command)
+  - `--to-main`
   - `--no-verify`
   - `--allow-main` (only with explicit user request)
   - `--allow-dirty`

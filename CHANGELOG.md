@@ -21,6 +21,7 @@ The format is based on Keep a Changelog and this project follows SemVer.
 - Added `playbooks/meta/consumer-repo-integration.md` with concrete bootstrap and migration checklists, wrapper templates, and minimal CI wiring for consumer repos.
 - Shared worktree playbooks now define a terminal-plus-Codex launch contract instead of the older iTerm2/`hapi codex --yolo` wording.
 - `review-guardrails` now fails fast with a configurable timeout instead of hanging indefinitely when the nested Codex review stalls.
+- Shared worktree playbooks now make Codex terminal launch opt-in and document an explicit direct-main push command for user-approved main updates.
 
 ## [0.2.0] - 2026-03-10
 ### Added

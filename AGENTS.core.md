@@ -27,6 +27,7 @@ This file defines repository-independent baseline rules for agent-driven enginee
   - `scripts/worktree create <task-slug>`
   - `scripts/worktree rebase --branch <branch>`
   - `scripts/worktree push --branch <branch> --verify-cmd "<repo-verify-cmd>"`
+  - `scripts/worktree push --branch <branch> --to-main --verify-cmd "<repo-verify-cmd>"`
   - `scripts/worktree cleanup <branch>`
   - `scripts/worktree list`
 - Required local configuration input for worktrees:

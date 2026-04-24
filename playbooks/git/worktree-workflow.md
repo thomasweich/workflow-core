@@ -18,7 +18,7 @@ code_paths:
 - Base ref: `origin/main`
 - Branch pattern: `agent/<task-slug>`
 - Worktree path pattern: sibling of main worktree root (`<main-worktree-parent>/<branch-name>`)
-- Launch behavior for `create`: attempt to open a Ghostty session and run `codex --dangerously-bypass-approvals-and-sandbox`
+- Launch behavior for `create`: do not open a separate terminal by default; consumer scripts may expose an explicit launch flag such as `--open-codex`.
 
 ## Required Local Config Input
 - `WORKTREE_MAIN_ROOT`: absolute path to the consumer repository's main worktree root.
@@ -36,17 +36,18 @@ code_paths:
 ## Primary Commands
 1. Create task worktree:
    - `scripts/worktree create <task-slug>`
-   - Add `--no-codex` to skip Ghostty/Codex auto-launch.
-   - If `--no-codex` is used, immediately print the exact manual command:
+   - If a consumer script supports Codex auto-launch, it must be opt-in and should use an explicit flag such as `--open-codex`.
+   - When auto-launch is skipped or unavailable, print the exact manual command:
      - `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox`
-   - If auto-launch is unavailable, print the same manual command instead of failing.
 2. Rebase task branch onto latest base:
    - `scripts/worktree rebase --branch <branch-name>`
 3. Push task branch with verification:
    - `scripts/worktree push --branch <branch-name> --verify-cmd "<repo-verify-cmd>"`
-4. Cleanup after merge:
+4. Push verified task branch directly to main when explicitly requested:
+   - `scripts/worktree push --branch <branch-name> --to-main --verify-cmd "<repo-verify-cmd>"`
+5. Cleanup after merge:
    - `scripts/worktree cleanup <branch-name>`
-5. Inspect current worktrees:
+6. Inspect current worktrees:
    - `scripts/worktree list`
 
 ## Consumer Contract Sanity Checks
@@ -82,9 +83,9 @@ code_paths:
 15. If shared files changed in parallel, apply minimal hunk-level changes and escalate when intent is unclear.
 16. Documentation updates are part of implementation and should be done before final verification for push.
 17. Before push, run the configured repository verify command (`<repo-verify-cmd>`) and record what ran. If the repo has both fast and full verify modes, use the command named by repo-local policy; run full verification only when explicitly requested or intentionally chosen.
-18. If `--no-codex` is used during `create`, immediately print the manual `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox` command.
-19. If auto-launch is unavailable in the current environment, print the same manual command and continue.
-20. `push` must explicitly target `<remote>/<branch>` and correct upstream tracking when local tracking is mismatched.
+18. `create` must not open a separate terminal unless the user explicitly requested launch behavior, for example with a consumer-supported `--open-codex` flag.
+19. If auto-launch is skipped or unavailable, print the manual `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox` command and continue.
+20. `push` must explicitly target `<remote>/<branch>` or, for an explicitly requested direct-main push, `<remote>/<base>`. Branch pushes should correct upstream tracking when local tracking is mismatched.
 
 ## Create Behavior
 - `create` should be idempotent for branch-to-worktree mapping:
