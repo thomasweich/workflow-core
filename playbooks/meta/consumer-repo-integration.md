@@ -105,6 +105,13 @@ printf '[verify] OK\n'
 
 Append repo-specific checks after the workflow-core integration block.
 
+`scripts/workflow/verify-integration` is the shared workflow-core integration check. It is intentionally not a shared all-repo verification script; consumer repositories own `scripts/verify` because product builds, runtime dependencies, language toolchains, and test suites are repo-specific.
+
+If a repository splits verification into fast and full modes, make the mode boundary explicit:
+- the fast/default command should be suitable for inner-loop feedback during implementation
+- the full command must be the repository's pre-push gate and include workflow-core integration plus repo-specific build/test/doc checks
+- local overlays and `scripts/worktree push --verify-cmd "<repo-verify-cmd>"` must reference the full command, for example `scripts/verify --full`
+
 ## Minimal CI Workflow
 If the consumer repo does not already have guardrail CI, start with:
 

@@ -76,6 +76,8 @@ This file defines repository-independent baseline rules for agent-driven enginee
 - Add or update deterministic tests for primary, edge, and failure paths.
 - Avoid snapshot-only assertions for behavior changes.
 - Run targeted checks during iteration and repository full verification before push.
+- Treat `<repo-verify-cmd>` as the consumer repository's full pre-push gate. A repo may also provide a faster default/inner-loop verify command, but push workflows and local overlays must name the full command.
+- `shared/workflow-core/scripts/workflow/verify-integration` validates shared workflow guardrails; it is not a substitute for a consumer repository's full product/build/test verification.
 - In final reporting, record what ran, what was skipped, and residual risk.
 
 ## 8) Planning Standard

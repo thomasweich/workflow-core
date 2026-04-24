@@ -81,7 +81,7 @@ code_paths:
 14. Never revert or discard unrelated edits during worktree operations.
 15. If shared files changed in parallel, apply minimal hunk-level changes and escalate when intent is unclear.
 16. Documentation updates are part of implementation and should be done before final verification for push.
-17. Before push, run the repository verify command and record what ran.
+17. Before push, run the repository full verify command (`<repo-verify-cmd>`) and record what ran. If the repo has both fast and full verify modes, use the full mode for push.
 18. If `--no-codex` is used during `create`, immediately print the manual `cd <worktree-path> && codex --dangerously-bypass-approvals-and-sandbox` command.
 19. If auto-launch is unavailable in the current environment, print the same manual command and continue.
 20. `push` must explicitly target `<remote>/<branch>` and correct upstream tracking when local tracking is mismatched.
