@@ -6,7 +6,7 @@ The format is based on Keep a Changelog and this project follows SemVer.
 
 ## [Unreleased]
 ### Changed
-- `worktree.md` is now the shared workflow-core standard canonical worktree context file across consumer repositories, with a documented baseline contract in `docs/worktree-md-standard.md`.
+- `worktree.md` is now explicitly local-only operational state across consumer repositories; repos should ignore root `worktree.md` and scaffold it from the tracked template in `templates/worktree.md`.
 - Shared `worktree.md` guidance now requires open todos to stay slice-sized and truthfully current, and `verify-integration` now warns on obviously broad umbrella todos instead of letting them drift silently.
 - Approved formal plans now authorize end-to-end sequential execution by default, with progress updates for visibility rather than redundant per-step permission prompts.
 - Shared-core now defaults to proactively committing completed verified atomic batches unless the user asked to hold commits or batch them differently.

@@ -18,7 +18,7 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
 - Shared in `workflow-core`:
   - non-negotiables
   - worktree workflow and command contract
-  - shared `worktree.md` standard for worktree-local context
+  - shared local-only `worktree.md` standard for worktree-local context
   - approved-plan execution and atomic-commit defaults
   - planning/testing/documentation process guardrails
   - shared Codex plugins, skills, and reusable plugin-side documentation under `plugins/`
@@ -38,14 +38,15 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
 3. Set required local config values:
    - `WORKTREE_MAIN_ROOT=<absolute-path-to-main-worktree-root>`
    - Derive task-worktree parent as `dirname(WORKTREE_MAIN_ROOT)`.
-4. Adopt the shared `worktree.md` standard in consumer worktrees.
-   - Use `worktree.md` at the worktree root as the canonical shared context file.
+4. Adopt the shared local-only `worktree.md` standard in consumer worktrees.
+   - Add `/worktree.md` to the repository-root `.gitignore`.
+   - Use local `worktree.md` at the worktree root as the shared context file.
    - At minimum, support `# Todos` and `# Active Plans` per `docs/worktree-md-standard.md`.
-   - If the repository already has another worktree-local context file, keep it supplemental rather than canonical.
+   - If the repository already has another worktree-local context file, keep it supplemental rather than the shared standard.
 5. Add or adapt `scripts/worktree` in the consumer repo so it satisfies the shared command contract.
    - `scripts/worktree --help` should succeed and advertise `create`, `rebase`, `push`, `cleanup`, and `list`.
    - `scripts/worktree list` should be safe and non-mutating.
-   - Ensure worktree creation or onboarding bootstraps `worktree.md` when it is missing.
+   - Ensure worktree creation or onboarding bootstraps local `worktree.md` when it is missing, usually from `templates/worktree.md`.
 6. Create effective policy entrypoint:
    - `AGENTS.md` in consumer root, assembled from shared core + local overlay.
    - The generated file should contain a composed snapshot of the shared core policy plus the local overlay, not just pointers.
@@ -60,7 +61,7 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
    - effective policy file is up to date
    - local overlay does not weaken core non-negotiables
    - local `scripts/worktree` satisfies the shared contract
-   - repository verification should fail when the repo’s own stricter `worktree.md` checks fail
+   - repository verification may include any repo-specific checks for the local `worktree.md` content contract
    - Run the shared-owned integration suite:
      - `scripts/workflow/verify-integration`
    - Optional full repo verification around it:
@@ -68,12 +69,12 @@ For concrete bootstrap and migration steps, use `playbooks/meta/consumer-repo-in
 
 ## `worktree.md` Enforcement
 The shared standard is enforced in layers:
-- Shared policy: generated `AGENTS.md` propagates the `worktree.md` requirement into every consumer repo.
-- Shared worktree workflow: `playbooks/git/worktree-workflow.md` requires `worktree.md` maintenance as part of normal task execution.
+- Shared policy: generated `AGENTS.md` propagates the local-only `worktree.md` requirement into every consumer repo.
+- Shared worktree workflow: `playbooks/git/worktree-workflow.md` requires local `worktree.md` maintenance as part of normal task execution.
 - Shared verification warning: `scripts/workflow/verify-integration` can warn on obviously broad open umbrella todos so stale branch-level work is noticed earlier.
-- Consumer bootstrap: each repo should create or backfill `worktree.md` during worktree creation/onboarding.
-- Consumer verification: repos should add any stricter schema/content checks they need to `scripts/verify`.
-- Product/tooling adoption: local UIs and agents should read/write `worktree.md` instead of inventing parallel canonical context files.
+- Consumer bootstrap: each repo should ignore root `worktree.md` and create or backfill the local file during worktree creation/onboarding.
+- Consumer verification: repos may add any stricter schema/content checks they need to `scripts/verify`.
+- Product/tooling adoption: local UIs and agents should read/write local `worktree.md` instead of inventing parallel context files.
 
 ## Local Overlay Guidance
 - Keep local overlay scoped to repository specifics:

@@ -19,7 +19,7 @@ UMBRELLA_TODO_RE = re.compile(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
-        description="Emit warnings for obviously broad open worktree.md todos.",
+        description="Emit warnings for obviously broad open local worktree.md todos.",
     )
     parser.add_argument("--repo-root", required=True, help="Consumer repository root to inspect.")
     return parser.parse_args()

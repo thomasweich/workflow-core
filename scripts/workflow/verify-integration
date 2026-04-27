@@ -94,7 +94,7 @@ python3 -m py_compile "$shared_root/scripts/workflow/check-worktree-md"
 python3 -m py_compile "$shared_root/scripts/workflow/validate-guardrails"
 python3 -m py_compile "$shared_root/scripts/workflow/review-guardrails"
 
-printf '[%s] worktree.md warning checks...\n' "$SCRIPT_NAME"
+printf '[%s] local worktree.md warning checks...\n' "$SCRIPT_NAME"
 "$worktree_md_checker" --repo-root "$repo_root"
 
 printf '[%s] workflow-core tooling tests...\n' "$SCRIPT_NAME"

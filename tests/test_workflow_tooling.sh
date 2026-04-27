@@ -474,6 +474,9 @@ WORKFLOW_GUARDRAILS_SKIP_CORE_TESTS=1 \
   "$VERIFY_INTEGRATION_SCRIPT" --repo-root "$repo_verify" --shared-root "$repo_verify/shared/workflow-core" >/dev/null
 
 printf '[workflow-core tests] shared verify-integration warns on broad worktree umbrella todos...\n'
+cat <<'EOF' >"$repo_verify/.gitignore"
+/worktree.md
+EOF
 cat <<'EOF' >"$repo_verify/worktree.md"
 # Todos
 
