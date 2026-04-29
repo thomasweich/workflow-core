@@ -57,6 +57,8 @@ This file defines repository-independent baseline rules for agent-driven enginee
 ## 5) Documentation Standard
 - Behavior/API/workflow/architecture changes require doc updates in the same task.
 - Pure refactors/test-only/cosmetic-only changes can skip docs unless they alter operational behavior.
+- When moving, renaming, removing, or adding files, tools, commands, APIs, or workflow surfaces, update current documentation, README/index files, front matter `code_paths`, and local markdown links in the same task.
+- Current docs must not point at missing paths or obsolete commands. Archived docs may preserve historical references, but current docs must either be updated or explicitly label references as historical.
 - `worktree.md` at the worktree root is the shared standard local-only worktree context/status file across consumer repositories. It is operational state, not a repository-tracked artifact.
 - Consumer repositories should ignore root `worktree.md` in source control and scaffold it from the shared template when missing.
 - Keep local `worktree.md` updated in the same task whenever worktree scope, active plans, or remaining high-level todos change.
